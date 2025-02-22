@@ -121,7 +121,7 @@ else
     clear dimVec_obs dimVec_exp
 end
 switch designLabel
-    case {"Freq_Time_Channel" "Freq_Freq_Channel"}
+    case {"Freq_Time_Channel" "FreqEEG_FreqHP_Channel"}
         nz3 = dimVec(1);
         ny1 = dimVec(2);
         nx2 = dimVec(3);
@@ -174,7 +174,7 @@ ATPixels = find(threshMatrix==pixelSign);
 
 % get ND grids corresponding with the above-treshold pixels
 switch designLabel
-    case {"Freq_Time_Channel"  "Freq_Freq_Channel"}
+    case {"Freq_Time_Channel"  "FreqEEG_FreqHP_Channel"}
         [z3Matrix, y1Matrix, x2Matrix] = ndgrid(1:nz3,1:ny1,1:nx2);
     case {"Freq_Time" "Time_Time" "Freq_Freq"}
         [y1Matrix, x2Matrix] = ndgrid(1:ny1,1:nx2);
