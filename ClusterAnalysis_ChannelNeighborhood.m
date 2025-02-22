@@ -1,4 +1,4 @@
-function [ neighborMatrix ] = ...
+function [ neighborMatrix, D_binned ] = ...
     ClusterAnalysis_ChannelNeighborhood(chanlocs, dist_threshold, angDistFig_flag, topoPlotFig_flag, topoPlotFig_chanLbl, eeglabPath)
 
 % This function identifies clusters along certain dimensions
@@ -95,10 +95,26 @@ if angDistFig_flag==1
 
 end
 
+% discretize sensor distance and define neighbors
+%   0 = same channel 
+%   1 = within dist_threshold
+%   2 = within dist_threshold*2
+%   3 = within dist_threshold*3
+%   ...
+%   n = within Max(D)
 
-% define neighbors (1=neighbors, 0=no)
-neighborMatrix = D<dist_threshold;
-neighborMatrix = logical(neighborMatrix - eye(nChan)); % remove the diagonal (a channel is not neighbor with itself)
+% create edges from 0 to max(D) in steps of dist_threshold, making sure the upper edge is included too
+angularEdges = 0:dist_threshold:max(D(:));
+if angularEdges(end)~=max(D(:));     angularEdges(end+1) = max(D(:));  end
+D_binned = 100*ones(size(D)); % initialize
+dIdx = D==angularEdges(1);
+D_binned(dIdx) = angularEdges(1);
+for eIdx = 1:length(angularEdges)-1
+    dIdx = D>angularEdges(eIdx)  &  D<=angularEdges(eIdx+1);
+    D_binned(dIdx) = eIdx;
+end
+%   neighbor = if discretized distance == 1 (a sensor cannot be neighbor with itself)
+neighborMatrix = D_binned==1;
 neighborNum = sum(neighborMatrix,1);  % number of neighbors for each channel
 
 
