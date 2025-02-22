@@ -73,7 +73,6 @@ end
 % positive
 pval_pos = nan(1,length(clusterMeasure_pos));
 for clIdx = 1:length(clusterMeasure_pos)
-    % % BUG. DELETE THIS LINE pval_pos(clIdx) = sum(clustMaxMeasure_H0>clusterMeasure_pos(clIdx)) / length(clustMaxMeasure_H0);
     pval_pos(clIdx) = sum(clusterMeasure_pos(clIdx)<clustMaxMeasure_H0) / length(clustMaxMeasure_H0);
 end
 % concatenate negative and positive
@@ -179,7 +178,9 @@ chanInClusterNum = cellfun(@length,chanInCluster);
 
 % effect size (e.g., Cohen's d, correlation coefficient)
 % eSiz within each cluster (this does not correspond with any inferential test, purely descriptive)
-% Mdn (median) and Ext (most extreme) of eSiz across all pixels within each cluster
+%   - Mdn (median) 
+%   - Ext (most extreme) of eSiz across all pixels within each cluster
+%   - weighted Medoid
 % negative
 eSizMdn_neg = nan(1,length(clusterMeasure_neg));
 eSizExt_neg = nan(1,length(clusterMeasure_neg));
@@ -188,16 +189,49 @@ eSizExt_y1_units_neg = nan(1,length(clusterMeasure_neg));
 eSizExt_x2_pnt_neg   = nan(1,length(clusterMeasure_neg));
 eSizExt_x2_units_neg = nan(1,length(clusterMeasure_neg));
 eSizExt_z3_lbl_neg   = repmat("",1,length(clusterMeasure_neg));
+eSizExt_z3_idx_neg   = nan(1,length(clusterMeasure_neg));
+eSizMedoid_neg = nan(1,length(clusterMeasure_neg));
+eSizMedoid_y1_pnt_neg   = nan(1,length(clusterMeasure_neg));
+eSizMedoid_y1_units_neg = nan(1,length(clusterMeasure_neg));
+eSizMedoid_x2_pnt_neg   = nan(1,length(clusterMeasure_neg));
+eSizMedoid_x2_units_neg = nan(1,length(clusterMeasure_neg));
+eSizMedoid_z3_lbl_neg   = repmat("",1,length(clusterMeasure_neg));
+eSizMedoid_z3_idx_neg   = nan(1,length(clusterMeasure_neg));
 for clIdx = 1:length(clusterMeasure_neg)
     idx = clusterMatrix_neg==clIdx*-1;
-
+    % median
     eSizMdn_neg(clIdx) = median(eSizMatrix(idx));
+    % most extreme
     [eSizExt_neg(clIdx),   ExtIdx] = min(eSizMatrix(idx));
     temp = y1Matrix(idx);           eSizExt_y1_pnt_neg(clIdx)   = temp(ExtIdx);
     temp = y1Matrix_units(idx);     eSizExt_y1_units_neg(clIdx) = temp(ExtIdx);
     temp = x2Matrix(idx);           eSizExt_x2_pnt_neg(clIdx)   = temp(ExtIdx);
     temp = x2Matrix_units(idx);     eSizExt_x2_units_neg(clIdx) = temp(ExtIdx);
     temp = z3Matrix_lbl(idx);       eSizExt_z3_lbl_neg(clIdx)   = temp(ExtIdx);
+    temp = z3Matrix(idx);           eSizExt_z3_idx_neg(clIdx)   = temp(ExtIdx);
+    % weighted medoid 
+    % compute dissimilarity between each pairs in the cluster (points a and b) as Euclidean distance, using binned angular distance for z3
+    eSiz_clustPointsVals = eSizMatrix(idx);
+    y1_clustPointsCoords = y1Matrix(idx); % y1-dimension coordinates for all points in the cluster
+    x2_clustPointsCoords = x2Matrix(idx); % x2-dimension "
+    z3_clustPointsCoords = z3Matrix(idx); % z3-dimension "
+    y1_clustPointsUnits = y1Matrix_units(idx); % y1-dimension units for all points in the cluster
+    x2_clustPointsUnits = x2Matrix_units(idx); % x2-dimension "
+    z3_clustPointsLbls  = z3Matrix_lbl(idx);   % z3-dimension labels "
+    euclDistance = nan(nnz(idx),nnz(idx));
+    for aIdx = 1:nnz(idx) 
+        for bIdx = 1:nnz(idx)
+            euclDistance(aIdx,bIdx) = sqrt(  (y1_clustPointsCoords(aIdx)-y1_clustPointsCoords(bIdx)).^2  +  (x2_clustPointsCoords(aIdx)-x2_clustPointsCoords(bIdx)).^2  +  (DimStruct.z3_Dbinned(z3Matrix(aIdx),z3Matrix(bIdx))).^2  ); 
+        end
+    end % TO DO: vectorize the following lines to avoid for loops and achieve faster computation time
+    [~, MedoidIdx] = min(sum(euclDistance,1) .* abs(eSiz_clustPointsVals').^-1);
+    eSizMedoid_y1_pnt_neg(clIdx)   = y1_clustPointsCoords(MedoidIdx);
+    eSizMedoid_y1_units_neg(clIdx) = y1_clustPointsUnits(MedoidIdx);
+    eSizMedoid_x2_pnt_neg(clIdx)   = x2_clustPointsCoords(MedoidIdx);
+    eSizMedoid_x2_units_neg(clIdx) = x2_clustPointsUnits(MedoidIdx);
+    eSizMedoid_z3_lbl_neg(clIdx)   = z3_clustPointsLbls(MedoidIdx);
+    eSizMedoid_z3_idx_neg(clIdx)   = z3_clustPointsCoords(MedoidIdx);
+    eSizMedoid_neg(clIdx)  = eSiz_clustPointsVals(MedoidIdx);
 end
 % positive
 eSizMdn_pos = nan(1,length(clusterMeasure_pos));
@@ -207,16 +241,49 @@ eSizExt_y1_units_pos = nan(1,length(clusterMeasure_pos));
 eSizExt_x2_pnt_pos   = nan(1,length(clusterMeasure_pos));
 eSizExt_x2_units_pos = nan(1,length(clusterMeasure_pos));
 eSizExt_z3_lbl_pos   = repmat("",1,length(clusterMeasure_pos));
+eSizExt_z3_idx_pos   = nan(1,length(clusterMeasure_pos));
+eSizMedoid_pos = nan(1,length(clusterMeasure_pos));
+eSizMedoid_y1_pnt_pos   = nan(1,length(clusterMeasure_pos));
+eSizMedoid_y1_units_pos = nan(1,length(clusterMeasure_pos));
+eSizMedoid_x2_pnt_pos   = nan(1,length(clusterMeasure_pos));
+eSizMedoid_x2_units_pos = nan(1,length(clusterMeasure_pos));
+eSizMedoid_z3_lbl_pos   = repmat("",1,length(clusterMeasure_pos));
+eSizMedoid_z3_idx_pos   = nan(1,length(clusterMeasure_pos));
 for clIdx = 1:length(clusterMeasure_pos)
     idx = clusterMatrix_pos==clIdx;
-
+    % median
     eSizMdn_pos(clIdx) = median(eSizMatrix(idx));
+    % most extreme
     [eSizExt_pos(clIdx),   ExtIdx] = max(eSizMatrix(idx));
     temp = y1Matrix(idx);           eSizExt_y1_pnt_pos(clIdx)   = temp(ExtIdx);
     temp = y1Matrix_units(idx);     eSizExt_y1_units_pos(clIdx) = temp(ExtIdx);
     temp = x2Matrix(idx);           eSizExt_x2_pnt_pos(clIdx)   = temp(ExtIdx);
     temp = x2Matrix_units(idx);     eSizExt_x2_units_pos(clIdx) = temp(ExtIdx);
     temp = z3Matrix_lbl(idx);       eSizExt_z3_lbl_pos(clIdx)   = temp(ExtIdx);
+    temp = z3Matrix(idx);           eSizExt_z3_idx_pos(clIdx)   = temp(ExtIdx);
+    % weighted medoid 
+    % compute dissimilarity between each pairs in the cluster (points a and b) as Euclidean distance, using binned angular distance for z3
+    eSiz_clustPointsVals = eSizMatrix(idx);
+    y1_clustPointsCoords = y1Matrix(idx); % y1-dimension coordinates for all points in the cluster
+    x2_clustPointsCoords = x2Matrix(idx); % x2-dimension "
+    z3_clustPointsCoords = z3Matrix(idx); % z3-dimension "
+    y1_clustPointsUnits = y1Matrix_units(idx); % y1-dimension units for all points in the cluster
+    x2_clustPointsUnits = x2Matrix_units(idx); % x2-dimension "
+    z3_clustPointsLbls  = z3Matrix_lbl(idx);   % z3-dimension labels "
+    euclDistance = nan(nnz(idx),nnz(idx));
+    for aIdx = 1:nnz(idx) 
+        for bIdx = 1:nnz(idx)
+            euclDistance(aIdx,bIdx) = sqrt(  (y1_clustPointsCoords(aIdx)-y1_clustPointsCoords(bIdx)).^2  +  (x2_clustPointsCoords(aIdx)-x2_clustPointsCoords(bIdx)).^2  +  (DimStruct.z3_Dbinned(z3Matrix(aIdx),z3Matrix(bIdx))).^2  ); 
+        end
+    end % TO DO: vectorize the following lines to avoid for loops and achieve faster computation time
+    [~, MedoidIdx] = min(sum(euclDistance,1) .* eSiz_clustPointsVals'.^-1);
+    eSizMedoid_y1_pnt_pos(clIdx)   = y1_clustPointsCoords(MedoidIdx);
+    eSizMedoid_y1_units_pos(clIdx) = y1_clustPointsUnits(MedoidIdx);
+    eSizMedoid_x2_pnt_pos(clIdx)   = x2_clustPointsCoords(MedoidIdx);
+    eSizMedoid_x2_units_pos(clIdx) = x2_clustPointsUnits(MedoidIdx);
+    eSizMedoid_z3_lbl_pos(clIdx)   = z3_clustPointsLbls(MedoidIdx);
+    eSizMedoid_z3_idx_pos(clIdx)   = z3_clustPointsCoords(MedoidIdx);
+    eSizMedoid_pos(clIdx)  = eSiz_clustPointsVals(MedoidIdx);
 end
 % concatenate negative and positive
 eSizMdn = [ eSizMdn_neg   eSizMdn_pos ];
@@ -225,7 +292,17 @@ eSizExt_y1_pnt   = [ eSizExt_y1_pnt_neg    eSizExt_y1_pnt_pos   ];
 eSizExt_y1_units = [ eSizExt_y1_units_neg  eSizExt_y1_units_pos ];
 eSizExt_x2_pnt   = [ eSizExt_x2_pnt_neg    eSizExt_x2_pnt_pos   ];
 eSizExt_x2_units = [ eSizExt_x2_units_neg  eSizExt_x2_units_pos ];
-eSizExt_z3_lbl   = [ eSizExt_z3_lbl_neg    eSizExt_z3_lbl_pos ];
+eSizExt_z3_lbl   = [ eSizExt_z3_lbl_neg    eSizExt_z3_lbl_pos   ];
+eSizExt_z3_idx   = [ eSizExt_z3_idx_neg    eSizExt_z3_idx_pos   ];
+eSizMedoid = [ eSizMedoid_neg   eSizMedoid_pos ];
+eSizMedoid_y1_pnt   = [ eSizMedoid_y1_pnt_neg    eSizMedoid_y1_pnt_pos  ];
+eSizMedoid_y1_units = [ eSizMedoid_y1_units_neg  eSizMedoid_y1_units_pos];
+eSizMedoid_x2_pnt   = [ eSizMedoid_x2_pnt_neg    eSizMedoid_x2_pnt_pos  ];
+eSizMedoid_x2_units = [ eSizMedoid_x2_units_neg  eSizMedoid_x2_units_pos];
+eSizMedoid_z3_lbl   = [ eSizMedoid_z3_lbl_neg    eSizMedoid_z3_lbl_pos  ];
+eSizMedoid_z3_idx   = [ eSizMedoid_z3_idx_neg    eSizMedoid_z3_idx_pos  ];
+
+
 
 
 % stat values at cluster level (this does not correspond with any test, purely descriptive)
@@ -274,13 +351,22 @@ for clIdx = 1:nClust
     clusterDescr(clIdx).([DimStruct.z3_lbl '_lbl' ])   = strjoin(chanInCluster{clIdx});
 
     clusterDescr(clIdx).eSiz_Mdn = eSizMdn(clIdx);
-    clusterDescr(clIdx).eSiz_Ext = eSizExt(clIdx);
 
+    clusterDescr(clIdx).eSiz_Ext = eSizExt(clIdx);
     clusterDescr(clIdx).(['eSiz_Ext_' DimStruct.y1_lbl '_' 'pnt' ])              = eSizExt_y1_pnt(clIdx);
     clusterDescr(clIdx).(['eSiz_Ext_' DimStruct.y1_lbl '_' DimStruct.y1_units ]) = eSizExt_y1_units(clIdx);
     clusterDescr(clIdx).(['eSiz_Ext_' DimStruct.x2_lbl '_' 'pnt' ])              = eSizExt_x2_pnt(clIdx);
     clusterDescr(clIdx).(['eSiz_Ext_' DimStruct.x2_lbl '_' DimStruct.x2_units ]) = eSizExt_x2_units(clIdx);
     clusterDescr(clIdx).(['eSiz_Ext_' DimStruct.z3_lbl '_' 'lbl'])               = eSizExt_z3_lbl(clIdx);
+    clusterDescr(clIdx).(['eSiz_Ext_' DimStruct.z3_lbl '_' 'idx'])               = eSizExt_z3_idx(clIdx);
+
+    clusterDescr(clIdx).eSiz_Medoid = eSizMedoid(clIdx);
+    clusterDescr(clIdx).(['eSiz_Medoid_' DimStruct.y1_lbl '_' 'pnt' ])              = eSizMedoid_y1_pnt(clIdx);
+    clusterDescr(clIdx).(['eSiz_Medoid_' DimStruct.y1_lbl '_' DimStruct.y1_units ]) = eSizMedoid_y1_units(clIdx);
+    clusterDescr(clIdx).(['eSiz_Medoid_' DimStruct.x2_lbl '_' 'pnt' ])              = eSizMedoid_x2_pnt(clIdx);
+    clusterDescr(clIdx).(['eSiz_Medoid_' DimStruct.x2_lbl '_' DimStruct.x2_units ]) = eSizMedoid_x2_units(clIdx);
+    clusterDescr(clIdx).(['eSiz_Medoid_' DimStruct.z3_lbl '_' 'lbl'])               = eSizMedoid_z3_lbl(clIdx);
+    clusterDescr(clIdx).(['eSiz_Medoid_' DimStruct.z3_lbl '_' 'idx'])               = eSizMedoid_z3_idx(clIdx);
 
     clusterDescr(clIdx).stat_Mdn = statMdn(clIdx);
     clusterDescr(clIdx).stat_Ext = statExt(clIdx);
