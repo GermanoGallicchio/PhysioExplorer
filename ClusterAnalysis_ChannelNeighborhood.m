@@ -1,4 +1,4 @@
-function [ neighborMatrix, Dbinned ] = ...
+function [ neighborMatrix, D, Dbinned ] = ...
     ClusterAnalysis_ChannelNeighborhood(chanlocs, dist_threshold, angDistFig_flag, topoPlotFig_flag, topoPlotFig_chanLbl, eeglabPath)
 
 % This function identifies clusters along certain dimensions
@@ -31,6 +31,10 @@ function [ neighborMatrix, Dbinned ] = ...
 %
 % neighborMatrix        NxN matrix (N = num of channels) of 0s and 1s
 %                       1=the two channels are neighbors, 0=not neighbors
+%
+% D                     NxN matrix with angular distances
+%
+% Dbinned               NxN matrix with binned angular distances (0=same channel, 1=neighbor, 2=within twice as far, etc)
 %
 % written by Germano Gallicchio 
 % germano.gallicchio@gmail.com
