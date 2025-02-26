@@ -1,18 +1,31 @@
 function [y1_MedIdx, x2_MedIdx, y1_wMedIdx, x2_wMedIdx ] = ...
     ClusterAnalysis_Medoids(statMat, clustIdxMat)
 
-% function to identify the medoid and weighted medoid in a 2d plane
+% function to identify the medoid and weighted medoid in a 2d continuous
+% plane (e.g., time-frequency, time-time, frequency-frequency)
 %
 % INPUT: 
 %
 % statMat       matrix containing all statistical values
-% clustIdxMat      matrix identifying the cluster that we want to describe
+%               size of matrix is (ny1-nx2) 
+%               
+% clustIdxMat   matrix identifying the cluster that we want to describe
 %               1=member of the cluster, 0=otherwise
+%               size of matrix is (ny1-nx2) 
+%
+%
 %
 % OUTPUT
 %
-% medoidIdx     index identfyying the medoid of the cluster
+% y1_MedIdx, x2_MedIdx      indices identfying the medoid in 2d space
 % 
+% y1_wMedIdx, x2_wMedIdx    indices identfying the weighted medoid in 2d space
+%
+%
+%
+% Author: Germano Gallicchio 
+% germano.gallicchio@gmail.com
+
 
 %% debugging cell
 
