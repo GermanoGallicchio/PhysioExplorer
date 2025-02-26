@@ -1,7 +1,7 @@
 function clusterDescr = ...
     ClusterAnalysis_Description_y1x2z3(DimStruct, clusterMatrix_neg, clusterMatrix_pos, clusterMeasure_neg, clusterMeasure_pos, clustMaxMeasure_H0, statMatrix, eSizMatrix)
 
-% GG_oneDimPlusSpaceClusterDescription describes the clusters 
+% ClusterAnalysis_Description_y1x2z3 describes the clusters 
 %
 % INPUT: 
 %
@@ -20,7 +20,7 @@ function clusterDescr = ...
 % OUTPUT:
 %
 % 
-% written by Germano Gallicchio 
+% Author: Germano Gallicchio 
 % germano.gallicchio@gmail.com
 
 %% debugging cell
@@ -49,11 +49,11 @@ else
     error('z3 is continuous. great but not yet done coded. if you only have two continuous variables (e.g., the other is channel), make sure that this is reflected in the DimStruct structure (i.e., the non-continuous variable should be z3)')
 end
 
-nFreq = length(DimStruct.y1_vec);
-nTime = length(DimStruct.x2_vec);
-nChan = length(chanlocs);
+ny1 = length(DimStruct.y1_vec);
+nx2 = length(DimStruct.x2_vec);
+nz3 = length(chanlocs);
 
-[z3Matrix,     y1Matrix,       x2Matrix]       = ndgrid(1:nChan,1:nFreq,1:nTime);
+[z3Matrix,     y1Matrix,       x2Matrix]       = ndgrid(1:nz3,1:ny1,1:nx2);
 [z3Matrix_lbl, y1Matrix_units, x2Matrix_units] = ndgrid(string({chanlocs.labels}),DimStruct.y1_vec,DimStruct.x2_vec);
 
 %%
@@ -211,47 +211,23 @@ for clIdx = 1:length(clusterMeasure_neg)
     temp = z3Matrix(idx);           eSizExt_z3_idx_neg(clIdx)   = temp(ExtIdx);
     % weighted medoid 
     % step 1. weighted medoid to find representative channel (the channel that minimizes the dissimilarity between channels, with dissimilarity = binned angular distance, and with bias towards channels with largest cluster mass portion)
-    chans = unique(z3Matrix(idx)); 
-    dissimilarityChan = nan(length(chans),length(chans));
-    for aIdx = 1:length(chans)
-        for bIdx = 1:length(chans)
-            dissimilarityChan(aIdx,bIdx) = sqrt(  DimStruct.z3_D(z3Matrix(aIdx),z3Matrix(bIdx)).^2  ); 
-        end
-    end % TO DO: vectorize these lines using repmat or similar
-    % compute the cluster mass proportion of each channel
-    totMass = sum(abs(eSizMatrix(idx)));
-    tmp = abs(eSizMatrix(idx));
-    chanMass = nan(1,length(chans));
-    for chanIdx = 1:length(chans)
-        chanMass(chanIdx) = sum(tmp(z3Matrix(idx)==chans(chanIdx)))/totMass;
-    end
-    chanMassR = (1-chanMass)/(sum(1-chanMass)); % reverse proportion of channel mass
-    [~, cMIdx] = min(sum(dissimilarityChan,1) .* chanMassR); % medoid channel, taking into account its cluster mass portion 
-    chanMedoidIdx = chans(cMIdx); % representative channel
+    statMat = eSizMatrix;
+    clustIdxMat = idx;
+    angularDistMat = DimStruct.z3_D;
+    [~, z3_wMedIdx] = ClusterAnalysis_z3Medoids_y1x2z3(statMat, clustIdxMat,angularDistMat);
     % step 2. consider only points within the representative channel, then find weighted medoid as representative point (the point that minimizes the dissimilarity, with dissimilarity Euclidean distance in the remaining dimensions
-    idx_subset = idx  &  z3Matrix==chanMedoidIdx;  
-    eSiz_clustPointsVals = eSizMatrix(idx_subset);
-    y1_clustPointsCoords = y1Matrix(idx_subset); % y1-dimension coordinates for all points in the cluster
-    x2_clustPointsCoords = x2Matrix(idx_subset); % x2-dimension "
-    z3_clustPointsCoords = z3Matrix(idx_subset); % z3-dimension "
-    y1_clustPointsUnits = y1Matrix_units(idx_subset); % y1-dimension units for all points in the cluster
-    x2_clustPointsUnits = x2Matrix_units(idx_subset); % x2-dimension "
-    z3_clustPointsLbls  = z3Matrix_lbl(idx_subset);   % z3-dimension labels "
-    dissimilarityPoint = nan(nnz(idx_subset),nnz(idx_subset));
-    for aIdx = 1:nnz(idx_subset)
-        for bIdx = 1:nnz(idx_subset)
-            dissimilarityPoint(aIdx,bIdx) = sqrt(  (y1_clustPointsCoords(aIdx)-y1_clustPointsCoords(bIdx)).^2  +  (x2_clustPointsCoords(aIdx)-x2_clustPointsCoords(bIdx)).^2  ); 
-        end
-    end % TO DO: vectorize these lines using repmat or similar
-    scaling = (1-abs(eSiz_clustPointsVals)/sum(abs(eSiz_clustPointsVals))) / (sum(1-abs(eSiz_clustPointsVals)/sum(abs(eSiz_clustPointsVals))));
-    [~, MedoidIdx] = min(sum(dissimilarityPoint,1) .* scaling');
-    eSizMedoid_y1_pnt_neg(clIdx)   = y1_clustPointsCoords(MedoidIdx);
-    eSizMedoid_y1_units_neg(clIdx) = y1_clustPointsUnits(MedoidIdx);
-    eSizMedoid_x2_pnt_neg(clIdx)   = x2_clustPointsCoords(MedoidIdx);
-    eSizMedoid_x2_units_neg(clIdx) = x2_clustPointsUnits(MedoidIdx);
-    eSizMedoid_z3_lbl_neg(clIdx)   = z3_clustPointsLbls(MedoidIdx);
-    eSizMedoid_z3_idx_neg(clIdx)   = z3_clustPointsCoords(MedoidIdx);
-    eSizMedoid_neg(clIdx)  = eSiz_clustPointsVals(MedoidIdx);
+    % subsetting idx and eSizMatrix so that only the representative channel is considered
+    idx_slice        = squeeze(idx(z3_wMedIdx,:,:));   
+    eSizMatrix_slice = squeeze(eSizMatrix(z3_wMedIdx,:,:));   
+    [~, ~, y1_wMedIdx, x2_wMedIdx] = ClusterAnalysis_Medoids(eSizMatrix_slice,idx_slice);
+    eSizMedoid_y1_pnt_neg(clIdx)   = y1_wMedIdx;
+    eSizMedoid_x2_pnt_neg(clIdx)   = x2_wMedIdx;
+    eSizMedoid_z3_idx_neg(clIdx)   = z3_wMedIdx;
+    eSizMedoid_y1_units_neg(clIdx) = y1Matrix_units(z3_wMedIdx,y1_wMedIdx,x2_wMedIdx);
+    eSizMedoid_x2_units_neg(clIdx) = x2Matrix_units(z3_wMedIdx,y1_wMedIdx,x2_wMedIdx);
+    eSizMedoid_z3_lbl_neg(clIdx)   = z3Matrix_lbl(z3_wMedIdx,y1_wMedIdx,x2_wMedIdx);
+    eSizMedoid_neg(clIdx)  = eSizMatrix(z3_wMedIdx,y1_wMedIdx,x2_wMedIdx);
+
 end
 % positive
 eSizMdn_pos = nan(1,length(clusterMeasure_pos));
@@ -283,47 +259,22 @@ for clIdx = 1:length(clusterMeasure_pos)
     temp = z3Matrix(idx);           eSizExt_z3_idx_pos(clIdx)   = temp(ExtIdx);
     % weighted medoid 
     % step 1. weighted medoid to find representative channel (the channel that minimizes the dissimilarity between channels, with dissimilarity = binned angular distance, and with bias towards channels with largest cluster mass portion)
-    chans = unique(z3Matrix(idx)); 
-    dissimilarityChan = nan(length(chans),length(chans));
-    for aIdx = 1:length(chans)
-        for bIdx = 1:length(chans)
-            dissimilarityChan(aIdx,bIdx) = sqrt(  DimStruct.z3_D(z3Matrix(aIdx),z3Matrix(bIdx)).^2  ); 
-        end
-    end % TO DO: vectorize these lines using repmat or similar
-    % compute the cluster mass proportion of each channel
-    totMass = sum(abs(eSizMatrix(idx)));
-    tmp = abs(eSizMatrix(idx));
-    chanMass = nan(1,length(chans));
-    for chanIdx = 1:length(chans)
-        chanMass(chanIdx) = sum(tmp(z3Matrix(idx)==chans(chanIdx)))/totMass;
-    end
-    chanMassR = (1-chanMass)/(sum(1-chanMass)); % reverse proportion of channel mass
-    [~, cMIdx] = min(sum(dissimilarityChan,1) .* chanMassR); % medoid channel, taking into account its cluster mass portion 
-    chanMedoidIdx = chans(cMIdx); % representative channel
+    statMat = eSizMatrix;
+    clustIdxMat = idx;
+    angularDistMat = DimStruct.z3_D;
+    [~, z3_wMedIdx] = ClusterAnalysis_z3Medoids_y1x2z3(statMat, clustIdxMat,angularDistMat);
     % step 2. consider only points within the representative channel, then find weighted medoid as representative point (the point that minimizes the dissimilarity, with dissimilarity Euclidean distance in the remaining dimensions
-    idx_subset = idx  &  z3Matrix==chanMedoidIdx;  
-    eSiz_clustPointsVals = eSizMatrix(idx_subset);
-    y1_clustPointsCoords = y1Matrix(idx_subset); % y1-dimension coordinates for all points in the cluster
-    x2_clustPointsCoords = x2Matrix(idx_subset); % x2-dimension "
-    z3_clustPointsCoords = z3Matrix(idx_subset); % z3-dimension "
-    y1_clustPointsUnits = y1Matrix_units(idx_subset); % y1-dimension units for all points in the cluster
-    x2_clustPointsUnits = x2Matrix_units(idx_subset); % x2-dimension "
-    z3_clustPointsLbls  = z3Matrix_lbl(idx_subset);   % z3-dimension labels "
-    dissimilarityPoint = nan(nnz(idx_subset),nnz(idx_subset));
-    for aIdx = 1:nnz(idx_subset)
-        for bIdx = 1:nnz(idx_subset)
-            dissimilarityPoint(aIdx,bIdx) = sqrt(  (y1_clustPointsCoords(aIdx)-y1_clustPointsCoords(bIdx)).^2  +  (x2_clustPointsCoords(aIdx)-x2_clustPointsCoords(bIdx)).^2  ); 
-        end
-    end % TO DO: vectorize these lines using repmat or similar
-    scaling = (1-abs(eSiz_clustPointsVals)/sum(abs(eSiz_clustPointsVals))) / (sum(1-abs(eSiz_clustPointsVals)/sum(abs(eSiz_clustPointsVals))));
-    [~, MedoidIdx] = min(sum(dissimilarityPoint,1) .* scaling');
-    eSizMedoid_y1_pnt_pos(clIdx)   = y1_clustPointsCoords(MedoidIdx);
-    eSizMedoid_y1_units_pos(clIdx) = y1_clustPointsUnits(MedoidIdx);
-    eSizMedoid_x2_pnt_pos(clIdx)   = x2_clustPointsCoords(MedoidIdx);
-    eSizMedoid_x2_units_pos(clIdx) = x2_clustPointsUnits(MedoidIdx);
-    eSizMedoid_z3_lbl_pos(clIdx)   = z3_clustPointsLbls(MedoidIdx);
-    eSizMedoid_z3_idx_pos(clIdx)   = z3_clustPointsCoords(MedoidIdx);
-    eSizMedoid_pos(clIdx)  = eSiz_clustPointsVals(MedoidIdx);
+    % subsetting idx and eSizMatrix so that only the representative channel is considered
+    idx_slice        = squeeze(idx(z3_wMedIdx,:,:));   
+    eSizMatrix_slice = squeeze(eSizMatrix(z3_wMedIdx,:,:));   
+    [~, ~, y1_wMedIdx, x2_wMedIdx] = ClusterAnalysis_Medoids(eSizMatrix_slice,idx_slice);
+    eSizMedoid_y1_pnt_pos(clIdx)   = y1_wMedIdx;
+    eSizMedoid_x2_pnt_pos(clIdx)   = x2_wMedIdx;
+    eSizMedoid_z3_idx_pos(clIdx)   = z3_wMedIdx;
+    eSizMedoid_y1_units_pos(clIdx) = y1Matrix_units(z3_wMedIdx,y1_wMedIdx,x2_wMedIdx);
+    eSizMedoid_x2_units_pos(clIdx) = x2Matrix_units(z3_wMedIdx,y1_wMedIdx,x2_wMedIdx);
+    eSizMedoid_z3_lbl_pos(clIdx)   = z3Matrix_lbl(z3_wMedIdx,y1_wMedIdx,x2_wMedIdx);
+    eSizMedoid_pos(clIdx)  = eSizMatrix(z3_wMedIdx,y1_wMedIdx,x2_wMedIdx);
 end
 % concatenate negative and positive
 eSizMdn = [ eSizMdn_neg   eSizMdn_pos ];
@@ -400,13 +351,13 @@ for clIdx = 1:nClust
     clusterDescr(clIdx).(['eSiz_Ext_' DimStruct.z3_lbl '_' 'lbl'])               = eSizExt_z3_lbl(clIdx);
     clusterDescr(clIdx).(['eSiz_Ext_' DimStruct.z3_lbl '_' 'idx'])               = eSizExt_z3_idx(clIdx);
 
-    clusterDescr(clIdx).eSiz_Medoid = eSizMedoid(clIdx);
-    clusterDescr(clIdx).(['eSiz_Medoid_' DimStruct.y1_lbl '_' 'pnt' ])              = eSizMedoid_y1_pnt(clIdx);
-    clusterDescr(clIdx).(['eSiz_Medoid_' DimStruct.y1_lbl '_' DimStruct.y1_units ]) = eSizMedoid_y1_units(clIdx);
-    clusterDescr(clIdx).(['eSiz_Medoid_' DimStruct.x2_lbl '_' 'pnt' ])              = eSizMedoid_x2_pnt(clIdx);
-    clusterDescr(clIdx).(['eSiz_Medoid_' DimStruct.x2_lbl '_' DimStruct.x2_units ]) = eSizMedoid_x2_units(clIdx);
-    clusterDescr(clIdx).(['eSiz_Medoid_' DimStruct.z3_lbl '_' 'lbl'])               = eSizMedoid_z3_lbl(clIdx);
-    clusterDescr(clIdx).(['eSiz_Medoid_' DimStruct.z3_lbl '_' 'idx'])               = eSizMedoid_z3_idx(clIdx);
+    clusterDescr(clIdx).eSiz_wMedoid = eSizMedoid(clIdx);
+    clusterDescr(clIdx).(['eSiz_wMedoid_' DimStruct.y1_lbl '_' 'pnt' ])              = eSizMedoid_y1_pnt(clIdx);
+    clusterDescr(clIdx).(['eSiz_wMedoid_' DimStruct.y1_lbl '_' DimStruct.y1_units ]) = eSizMedoid_y1_units(clIdx);
+    clusterDescr(clIdx).(['eSiz_wMedoid_' DimStruct.x2_lbl '_' 'pnt' ])              = eSizMedoid_x2_pnt(clIdx);
+    clusterDescr(clIdx).(['eSiz_wMedoid_' DimStruct.x2_lbl '_' DimStruct.x2_units ]) = eSizMedoid_x2_units(clIdx);
+    clusterDescr(clIdx).(['eSiz_wMedoid_' DimStruct.z3_lbl '_' 'lbl'])               = eSizMedoid_z3_lbl(clIdx);
+    clusterDescr(clIdx).(['eSiz_wMedoid_' DimStruct.z3_lbl '_' 'idx'])               = eSizMedoid_z3_idx(clIdx);
 
     clusterDescr(clIdx).stat_Mdn = statMdn(clIdx);
     clusterDescr(clIdx).stat_Ext = statExt(clIdx);
