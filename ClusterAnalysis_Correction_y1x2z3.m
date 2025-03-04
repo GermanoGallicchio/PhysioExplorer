@@ -50,13 +50,15 @@ end
 
 %%
 
-% idx of clusters to remove
-clusters2remove_idx = abs(clusterMeasure) <= clusterThreshold;
+% idx and sign of clusters to remove
+clusters2remove_idx  = abs(clusterMeasure) <= clusterThreshold;
+clusters2remove_sign = clusters2remove_idx.*sign(clusterMeasure);
 
 % correct clusterMatrix
 clusterMatrix_corrected = clusterMatrix;  % initialize a copy
 for clIdx = find(clusters2remove_idx)
-    clusterMatrix_corrected(clusterMatrix==clIdx) = 0;
+    clSignIdx = clIdx*clusters2remove_sign(clIdx); % multiply by its sign (so it also works on negative clusters)
+    clusterMatrix_corrected(clusterMatrix==clSignIdx) = 0;
 end
 
 % correct clusterMeasure
