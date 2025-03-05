@@ -1,5 +1,5 @@
 function clusterDescr = ...
-    ClusterAnalysis_Description_y1x2(DimStruct, clusterMatrix_neg, clusterMatrix_pos, clusterMeasure_neg, clusterMeasure_pos, clustMaxMeasure_H0, statMatrix, eSizMatrix)
+    ClusterAnalysis_Description_y1x2(DimStruct, clusterMatrix_neg, clusterMatrix_pos, clusterMeasure_neg, clusterMeasure_pos, clustSignThreshold, clustMaxMeasure_H0, statMatrix, eSizMatrix)
 
 % ClusterAnalysis_Description_y1x2 describes the clusters 
 %
@@ -256,6 +256,7 @@ statExt = [ statExt_neg   statExt_pos ];
 clusterDescr = struct();
 for clIdx = 1:nClust
     clusterDescr(clIdx).measure = clusterMeasure(clIdx);
+    clusterDescr(clIdx).threshold = clustSignThreshold;
     clusterDescr(clIdx).pvalue = pval(clIdx);
 
     clusterDescr(clIdx).([DimStruct.y1_lbl '_' DimStruct.y1_units '_0'  ]) = y1_0(clIdx);
@@ -263,12 +264,14 @@ for clIdx = 1:nClust
     clusterDescr(clIdx).([DimStruct.y1_lbl '_' DimStruct.y1_units '_50' ]) = y1_50(clIdx);
     clusterDescr(clIdx).([DimStruct.y1_lbl '_' DimStruct.y1_units '_75' ]) = y1_75(clIdx);
     clusterDescr(clIdx).([DimStruct.y1_lbl '_' DimStruct.y1_units '_100']) = y1_100(clIdx);
+    clusterDescr(clIdx).([DimStruct.y1_lbl '_' DimStruct.y1_units '_range']) = ['[' num2str(y1_0(clIdx),'%.2f') ', ' num2str(y1_100(clIdx),'%.2f') ']'];
 
     clusterDescr(clIdx).([DimStruct.x2_lbl '_' DimStruct.x2_units '_0'  ]) = x2_0(clIdx);
     clusterDescr(clIdx).([DimStruct.x2_lbl '_' DimStruct.x2_units '_25' ]) = x2_25(clIdx);
     clusterDescr(clIdx).([DimStruct.x2_lbl '_' DimStruct.x2_units '_50' ]) = x2_50(clIdx);
     clusterDescr(clIdx).([DimStruct.x2_lbl '_' DimStruct.x2_units '_75' ]) = x2_75(clIdx);
     clusterDescr(clIdx).([DimStruct.x2_lbl '_' DimStruct.x2_units '_100']) = x2_100(clIdx);
+    clusterDescr(clIdx).([DimStruct.x2_lbl '_' DimStruct.x2_units '_range']) = ['[' num2str(x2_0(clIdx),'%.2f') ', ' num2str(x2_100(clIdx),'%.2f') ']'];
 
     clusterDescr(clIdx).eSiz_Mdn = eSizMdn(clIdx);
 
@@ -293,6 +296,3 @@ if nClust>0
     [~, sortIdx] = sort(abs(clusterDescr.measure),'descend');
     clusterDescr = clusterDescr(sortIdx,:);
 end
-
-
-

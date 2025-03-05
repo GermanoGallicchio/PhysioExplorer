@@ -1,5 +1,5 @@
 function clusterDescr = ...
-    ClusterAnalysis_Description_y1x2z3(DimStruct, clusterMatrix_neg, clusterMatrix_pos, clusterMeasure_neg, clusterMeasure_pos, clustMaxMeasure_H0, statMatrix, eSizMatrix)
+    ClusterAnalysis_Description_y1x2z3(DimStruct, clusterMatrix_neg, clusterMatrix_pos, clusterMeasure_neg, clusterMeasure_pos, clustSignThreshold, clustMaxMeasure_H0, statMatrix, eSizMatrix)
 
 % ClusterAnalysis_Description_y1x2z3 describes the clusters 
 %
@@ -219,7 +219,7 @@ for clIdx = 1:length(clusterMeasure_neg)
     % subsetting idx and eSizMatrix so that only the representative channel is considered
     idx_slice        = squeeze(idx(z3_wMedIdx,:,:));   
     eSizMatrix_slice = squeeze(eSizMatrix(z3_wMedIdx,:,:));   
-    [~, ~, y1_wMedIdx, x2_wMedIdx] = ClusterAnalysis_Medoids(eSizMatrix_slice,idx_slice);
+    [~, ~, y1_wMedIdx, x2_wMedIdx] = ClusterAnalysis_y1x2Medoids(eSizMatrix_slice,idx_slice);
     eSizMedoid_y1_pnt_neg(clIdx)   = y1_wMedIdx;
     eSizMedoid_x2_pnt_neg(clIdx)   = x2_wMedIdx;
     eSizMedoid_z3_idx_neg(clIdx)   = z3_wMedIdx;
@@ -267,7 +267,7 @@ for clIdx = 1:length(clusterMeasure_pos)
     % subsetting idx and eSizMatrix so that only the representative channel is considered
     idx_slice        = squeeze(idx(z3_wMedIdx,:,:));   
     eSizMatrix_slice = squeeze(eSizMatrix(z3_wMedIdx,:,:));   
-    [~, ~, y1_wMedIdx, x2_wMedIdx] = ClusterAnalysis_Medoids(eSizMatrix_slice,idx_slice);
+    [~, ~, y1_wMedIdx, x2_wMedIdx] = ClusterAnalysis_y1x2Medoids(eSizMatrix_slice,idx_slice);
     eSizMedoid_y1_pnt_pos(clIdx)   = y1_wMedIdx;
     eSizMedoid_x2_pnt_pos(clIdx)   = x2_wMedIdx;
     eSizMedoid_z3_idx_pos(clIdx)   = z3_wMedIdx;
@@ -323,20 +323,22 @@ statExt = [ statExt_neg   statExt_pos ];
 
 clusterDescr = struct();
 for clIdx = 1:nClust
-    clusterDescr(clIdx).measure = clusterMeasure(clIdx);
+    clusterDescr(clIdx).measure   = clusterMeasure(clIdx);
+    clusterDescr(clIdx).threshold = clustSignThreshold;
     clusterDescr(clIdx).pvalue = pval(clIdx);
-
-    clusterDescr(clIdx).([DimStruct.y1_lbl 'y1_' DimStruct.y1_units '_0'  ]) = y1_0(clIdx);
+    clusterDescr(clIdx).([DimStruct.y1_lbl '_' DimStruct.y1_units '_0'  ]) = y1_0(clIdx);
     clusterDescr(clIdx).([DimStruct.y1_lbl '_' DimStruct.y1_units '_25' ]) = y1_25(clIdx);
     clusterDescr(clIdx).([DimStruct.y1_lbl '_' DimStruct.y1_units '_50' ]) = y1_50(clIdx);
     clusterDescr(clIdx).([DimStruct.y1_lbl '_' DimStruct.y1_units '_75' ]) = y1_75(clIdx);
     clusterDescr(clIdx).([DimStruct.y1_lbl '_' DimStruct.y1_units '_100']) = y1_100(clIdx);
-
+    clusterDescr(clIdx).([DimStruct.y1_lbl '_' DimStruct.y1_units '_range']) = ['[' num2str(y1_0(clIdx),'%.2f') ', ' num2str(y1_100(clIdx),'%.2f') ']'];
+    
     clusterDescr(clIdx).([DimStruct.x2_lbl '_' DimStruct.x2_units '_0'  ]) = x2_0(clIdx);
     clusterDescr(clIdx).([DimStruct.x2_lbl '_' DimStruct.x2_units '_25' ]) = x2_25(clIdx);
     clusterDescr(clIdx).([DimStruct.x2_lbl '_' DimStruct.x2_units '_50' ]) = x2_50(clIdx);
     clusterDescr(clIdx).([DimStruct.x2_lbl '_' DimStruct.x2_units '_75' ]) = x2_75(clIdx);
     clusterDescr(clIdx).([DimStruct.x2_lbl '_' DimStruct.x2_units '_100']) = x2_100(clIdx);
+    clusterDescr(clIdx).([DimStruct.x2_lbl '_' DimStruct.x2_units '_range']) = ['[' num2str(x2_0(clIdx),'%.2f') ', ' num2str(x2_100(clIdx),'%.2f') ']'];
 
     clusterDescr(clIdx).([DimStruct.z3_lbl '_count' ]) = chanInClusterNum(clIdx);
     clusterDescr(clIdx).([DimStruct.z3_lbl '_lbl' ])   = strjoin(chanInCluster{clIdx});
