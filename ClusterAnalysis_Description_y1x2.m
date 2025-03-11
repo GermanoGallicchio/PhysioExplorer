@@ -52,6 +52,21 @@ nx2 = length(DimStruct.x2_vec);
 clusterMeasure = [clusterMeasure_neg clusterMeasure_pos];
 nClust = length(clusterMeasure);
 
+% cluster ID
+% each cluster is identified by an ordinal number (negative for negative clusters)
+% the number itself is not meaningful. but it serves as identifier.
+% negative
+clusterID_neg = nan(1,length(clusterMeasure_neg));
+for clIdx = 1:length(clusterMeasure_neg)
+    clusterID_neg(clIdx) = clIdx*-1;
+end
+% positive
+clusterID_pos = nan(1,length(clusterMeasure_pos));
+for clIdx = 1:length(clusterMeasure_pos)
+    clusterID_pos(clIdx) = clIdx;
+end
+clusterID = [clusterID_neg clusterID_pos];
+
 % pvalues at cluster level (this corresponds with the inferential test)
 % p value for each cluster (how many more extreme values are there in the H0 dist?)
 % negative
@@ -255,6 +270,7 @@ statExt = [ statExt_neg   statExt_pos ];
 
 clusterDescr = struct();
 for clIdx = 1:nClust
+    clusterDescr(clIdx).id        = clusterID(clIdx);
     clusterDescr(clIdx).measure = clusterMeasure(clIdx);
     clusterDescr(clIdx).threshold = clustSignThreshold;
     clusterDescr(clIdx).pvalue = pval(clIdx);
