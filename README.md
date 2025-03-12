@@ -1,5 +1,5 @@
 
-A set of functions for _identifying_, _describing_, and _pruning_ the results of cluster-based analysis.
+**PhysioCluster Explorer** is a set of functions for _identifying_, _describing_, and _pruning_ the results of cluster-based analysis.
 Clusters can be defined across 1-3 dimensions (e.g, time, time-EEGsensors, time-frequency-EEGsensors). 
 
 ## Null hypothesis (H0) clusters
