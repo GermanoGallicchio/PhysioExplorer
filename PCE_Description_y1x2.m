@@ -1,7 +1,7 @@
 function clusterDescr = ...
-    ClusterAnalysis_Description_y1x2(DimStruct, clusterMatrix_neg, clusterMatrix_pos, clusterMeasure_neg, clusterMeasure_pos, clustSignThreshold, clustMaxMeasure_H0, statMatrix, eSizMatrix)
+    PCE_Description_y1x2(DimStruct, clusterMatrix_neg, clusterMatrix_pos, clusterMeasure_neg, clusterMeasure_pos, clustSignThreshold, clustMaxMeasure_H0, statMatrix, eSizMatrix)
 
-% ClusterAnalysis_Description_y1x2 describes the clusters 
+% PCE_Description_y1x2 describes the clusters 
 %
 % INPUT: 
 %
@@ -192,7 +192,7 @@ for clIdx = 1:length(clusterMeasure_neg)
     temp = x2Matrix(idx);           eSizExt_x2_pnt_neg(clIdx)   = temp(ExtIdx);
     temp = x2Matrix_units(idx);     eSizExt_x2_units_neg(clIdx) = temp(ExtIdx);
     % weighted medoid 
-    [~, ~, y1_wMedIdx, x2_wMedIdx] = ClusterAnalysis_y1x2Medoids(eSizMatrix,idx);
+    [~, ~, y1_wMedIdx, x2_wMedIdx] = PCE_y1x2Medoids(eSizMatrix,idx);
     eSizMedoid_y1_pnt_neg(clIdx)   = y1_wMedIdx;
     eSizMedoid_x2_pnt_neg(clIdx)   = x2_wMedIdx;
     eSizMedoid_y1_units_neg(clIdx) = y1Matrix_units(y1_wMedIdx,x2_wMedIdx);
@@ -222,7 +222,7 @@ for clIdx = 1:length(clusterMeasure_pos)
     temp = x2Matrix(idx);           eSizExt_x2_pnt_pos(clIdx)   = temp(ExtIdx);
     temp = x2Matrix_units(idx);     eSizExt_x2_units_pos(clIdx) = temp(ExtIdx);
     % weighted medoid 
-    [~, ~, y1_wMedIdx, x2_wMedIdx] = ClusterAnalysis_y1x2Medoids(eSizMatrix,idx);
+    [~, ~, y1_wMedIdx, x2_wMedIdx] = PCE_y1x2Medoids(eSizMatrix,idx);
     eSizMedoid_y1_pnt_pos(clIdx)   = y1_wMedIdx;
     eSizMedoid_x2_pnt_pos(clIdx)   = x2_wMedIdx;
     eSizMedoid_y1_units_pos(clIdx) = y1Matrix_units(y1_wMedIdx,x2_wMedIdx);
