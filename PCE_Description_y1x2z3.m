@@ -1,7 +1,7 @@
 function clusterDescr = ...
-    ClusterAnalysis_Description_y1x2z3(DimStruct, clusterMatrix_neg, clusterMatrix_pos, clusterMeasure_neg, clusterMeasure_pos, clustSignThreshold, clustMaxMeasure_H0, statMatrix, eSizMatrix)
+    PCE_Description_y1x2z3(DimStruct, clusterMatrix_neg, clusterMatrix_pos, clusterMeasure_neg, clusterMeasure_pos, clustSignThreshold, clustMaxMeasure_H0, statMatrix, eSizMatrix)
 
-% ClusterAnalysis_Description_y1x2z3 describes the clusters 
+% PCE_Description_y1x2z3 describes the clusters 
 %
 % INPUT: 
 %
@@ -229,12 +229,12 @@ for clIdx = 1:length(clusterMeasure_neg)
     statMat = eSizMatrix;
     clustIdxMat = idx;
     angularDistMat = DimStruct.z3_D;
-    [~, z3_wMedIdx] = ClusterAnalysis_z3Medoids_y1x2z3(statMat, clustIdxMat,angularDistMat);
+    [~, z3_wMedIdx] = PCE_z3Medoids_y1x2z3(statMat, clustIdxMat,angularDistMat);
     % step 2. consider only points within the representative channel, then find weighted medoid as representative point (the point that minimizes the dissimilarity, with dissimilarity Euclidean distance in the remaining dimensions
     % subsetting idx and eSizMatrix so that only the representative channel is considered
     idx_slice        = squeeze(idx(z3_wMedIdx,:,:));   
     eSizMatrix_slice = squeeze(eSizMatrix(z3_wMedIdx,:,:));   
-    [~, ~, y1_wMedIdx, x2_wMedIdx] = ClusterAnalysis_y1x2Medoids(eSizMatrix_slice,idx_slice);
+    [~, ~, y1_wMedIdx, x2_wMedIdx] = PCE_y1x2Medoids(eSizMatrix_slice,idx_slice);
     eSizMedoid_y1_pnt_neg(clIdx)   = y1_wMedIdx;
     eSizMedoid_x2_pnt_neg(clIdx)   = x2_wMedIdx;
     eSizMedoid_z3_idx_neg(clIdx)   = z3_wMedIdx;
@@ -277,12 +277,12 @@ for clIdx = 1:length(clusterMeasure_pos)
     statMat = eSizMatrix;
     clustIdxMat = idx;
     angularDistMat = DimStruct.z3_D;
-    [~, z3_wMedIdx] = ClusterAnalysis_z3Medoids_y1x2z3(statMat, clustIdxMat,angularDistMat);
+    [~, z3_wMedIdx] = PCE_z3Medoids_y1x2z3(statMat, clustIdxMat,angularDistMat);
     % step 2. consider only points within the representative channel, then find weighted medoid as representative point (the point that minimizes the dissimilarity, with dissimilarity Euclidean distance in the remaining dimensions
     % subsetting idx and eSizMatrix so that only the representative channel is considered
     idx_slice        = squeeze(idx(z3_wMedIdx,:,:));   
     eSizMatrix_slice = squeeze(eSizMatrix(z3_wMedIdx,:,:));   
-    [~, ~, y1_wMedIdx, x2_wMedIdx] = ClusterAnalysis_y1x2Medoids(eSizMatrix_slice,idx_slice);
+    [~, ~, y1_wMedIdx, x2_wMedIdx] = PCE_y1x2Medoids(eSizMatrix_slice,idx_slice);
     eSizMedoid_y1_pnt_pos(clIdx)   = y1_wMedIdx;
     eSizMedoid_x2_pnt_pos(clIdx)   = x2_wMedIdx;
     eSizMedoid_z3_idx_pos(clIdx)   = z3_wMedIdx;
