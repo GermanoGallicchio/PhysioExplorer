@@ -142,7 +142,7 @@ if topoPlotFig_flag==1
 
     figure(4); clf
     f = gcf;
-    f.Units = 'normalized'; f.Position = [0.2 0.05 0.6 0.5];
+    f.Units = 'normalized'; f.Position = [0.1 0.05 0.45 0.4];
     
     if length(chanLbl)==8
         nrow = 2;
@@ -155,7 +155,7 @@ if topoPlotFig_flag==1
     tld.TileSpacing = 'tight';
     
     radius = 0.70; % for plotting reasons only (radius is not in the computations)
-    xyLim = [-0.55 0.55];
+    xyLim = [-0.455 0.455];
     plotCounter = 0;
     for cIdx = 1:length(chanLbl)
         plotCounter = plotCounter + 1;
@@ -167,7 +167,7 @@ if topoPlotFig_flag==1
         set(gca,'XLim',xyLim, 'YLim',xyLim)
         % seed chan
         chan2plot = chanIdx(cIdx);
-        topoplot(surrogateData(chan2plot ), chanlocs(chan2plot),  'electrodes', 'on', 'style', 'blank', 'plotrad',radius, 'headrad', 0, 'emarker', {'.',[0    0.4470    0.7410], 15,5}); hold on; % plot neighbors of seed channels
+        topoplot(surrogateData(chan2plot ), chanlocs(chan2plot),  'electrodes', 'on', 'style', 'blank', 'plotrad',radius, 'headrad', 0, 'emarker', {'.',[0    0.4470    0.7410], 15,5}); hold on; % plot seed channel
         set(gca,'XLim',xyLim, 'YLim',xyLim)
         % neighbor chans
         chan2plot = neighborMatrix(chanIdx(cIdx),:);
@@ -176,13 +176,14 @@ if topoPlotFig_flag==1
             set(gca,'XLim',xyLim, 'YLim',xyLim)
         end
         %ttl = title({['seed channel: ' chanLbl{cIdx}] [num2str(sum(chan2plot)) ' neighbors' ]});
-        ttl = title(['seed channel: ' chanLbl{cIdx}]);
+        ttl = title(['seed: ' chanLbl{cIdx}]);
         ttl.FontWeight = 'normal';
-        ttl.VerticalAlignment = 'top';
-        ttl.Position(2) = 0.55;
+        ttl.VerticalAlignment = 'bottom';
+        ttl.FontSize = 10;
+        %ttl.Position(2) = 0.55;
         
     end
-    sgtitle('neighbors (in red) of seed channels (in blue)')
+    %sgtitle('neighbors (in red) of seed channels (in blue)')
     %doYouWantPrint = "no";
     %figureName = [mainFolder 'figures\ERP\chanNeighbors' '_' referenceLbl];
     %if strcmp(doYouWantPrint,"yes")
