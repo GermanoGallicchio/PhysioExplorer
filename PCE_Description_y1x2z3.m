@@ -177,13 +177,13 @@ x2_100= [ x2_100_neg  x2_100_pos ];
 chanInCluster_neg = cell(1,length(clusterMeasure_neg));
 for clIdx = 1:length(clusterMeasure_neg)
     idx = clusterMatrix_neg==clIdx*-1;
-    chanInCluster_neg{clIdx} = sort(unique(z3Matrix_lbl(idx)))';
+    chanInCluster_neg{clIdx} = unique(z3Matrix_lbl(idx))';
 end
 % positive
 chanInCluster_pos = cell(1,length(clusterMeasure_pos));
 for clIdx = 1:length(clusterMeasure_pos)
     idx = clusterMatrix_pos==clIdx;
-    chanInCluster_pos{clIdx} = sort(unique(z3Matrix_lbl(idx)))';
+    chanInCluster_pos{clIdx} = unique(z3Matrix_lbl(idx))';
 end
 % concatenate negative and positive
 chanInCluster = [chanInCluster_neg chanInCluster_pos];
