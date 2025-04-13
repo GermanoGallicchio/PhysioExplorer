@@ -1,5 +1,5 @@
 function [clusterMatrix, clusterSize, clusterMass, clusterRobMass] = ...
-    PCE_Identification_z1x2(statMatrix, pvalMatrix, DimStruct, p_crit, pixelSign, figFlag)
+    PCE_Identification_z1x2(statMatrix, pvalMatrix, DimStruct, p_crit, pixelSign, distThreshold, figFlag_cluster, figFlag_proximity)
 
 % This function identifies clusters in three dimensions: y1, x2, z1.
 % The nature of the dimensions is described in the DimStruct structure.
@@ -144,14 +144,90 @@ if abs(pixelSign)~=1
     error('clusterSign must be 1 (positive) or -1 (negative)')
 end
 
-if ~(figFlag==0 | figFlag==1)
+if ~(figFlag_cluster==0 | figFlag_cluster==1 | figFlag_proximity==0 | figFlag_proximity==1)
     error('figFlag must be 1=draw figure or 0=don''t')
 end
+
+%% fig proximity
+
+if figFlag_proximity==1
+    % continuity structure along the two continuous dimensions
+    % compute the Euclidean distance of each point in a square matrix from its central point.
+
+    % create a grid representing the indices of the continuous dimensions, with its center being (0,0)
+    distMatrix_halfExtent = 3; % how many indices on each side of the central index?
+    [distMatrix_x2] = ndgrid(-distMatrix_halfExtent:distMatrix_halfExtent);
+
+    % compute the Euclidean distances from the central point (0,0)
+    distMatrix_val = sqrt(distMatrix_x2.^2);
+
+    % cluster search extent
+    distMatrix_val_thresholded = double(distMatrix_val <= distThreshold);
+    distMatrix_val_thresholded(distMatrix_halfExtent+1) = 2;
+
+    % plot
+    figure(2); clf
+    f = gcf; f.Units = 'normalized'; f.Position = [0.6    0.05   0.24    0.25];
+    imagesc(distMatrix_val_thresholded)
+
+    % x axis
+%     xlabel('dimension 2');
+    set(gca, 'XTick', 0.5:1:size(distMatrix_val, 1)+0.5)  % change ticks for the grid
+    set(gca, 'XTickLabel', [])
+    % y axis
+    ylabel('dimension 1');
+    set(gca, 'YTick', 0.5:1:size(distMatrix_val, 1)+0.5)  % change ticks for the grid
+    set(gca, 'YTickLabel', [])
+
+    % add gridlines that align with cells
+    grid on; % Enable grid lines
+    set(gca, 'GridColor', [0 0 0], 'GridAlpha', 1, 'LineWidth', 0.5); % Style the grid
+
+    % graphic elements
+    axis equal; % Equal scaling for x and y
+    axis tight; % Fit axes tightly around the data
+
+    % colormap
+    colormap([0.8 0.8 0.8;     0.8500    0.3250    0.0980;      0    0.4470    0.7410]);
+
+    % display values in the grid
+    for rowIdx = 1:size(distMatrix_val,1)
+        for colIdx = 1:size(distMatrix_val,2)
+
+            % check if the distance is an integer to determine whether using sqrt symbol or not
+            switch mod(distMatrix_val(rowIdx,colIdx), 1)
+                case 0
+                    textStr = sprintf('%d', distMatrix_val(rowIdx, colIdx)); % display as an integer
+                otherwise
+                    textStr = sprintf('√%d', distMatrix_y1(rowIdx, colIdx)^2 + distMatrix_x2(rowIdx, colIdx)^2); % display with sqrt symbol
+            end
+
+            % decide which color to use for the text
+            switch distMatrix_val_thresholded(rowIdx,colIdx)
+                case 0
+                    textCol = [0 0 0];
+                case 1
+                    textCol = [1 1 1];
+            end
+
+            % overlay the formatted text at each grid cell
+            text(colIdx, rowIdx, textStr, ...
+                'HorizontalAlignment', 'center', 'VerticalAlignment', 'middle', ...
+                'Color', textCol, 'FontSize', 10, 'FontWeight', 'normal');
+        end
+    end
+
+    view([90 -90])
+    %title(sprintf('cluster search area (threshold ≤ %d)', distThreshold), 'FontWeight', 'normal');
+end
+
 
 %% get data
 
 % initialize clusterMatrix
 clusterMatrix = zeros(size(statMatrix));
+
+%%
 
 % apply threshold (based on p < p_crit) and separate pos from neg pixels
 threshMatrix = pvalMatrix<p_crit;
@@ -205,12 +281,23 @@ for pixel_idx = 1:length(ATPixels)    % loop through above-threshold pixels
                     end
                 end
                     
-                % compound distance
-                dist_compound = dist_z1 + dist_x2;
+                
+                
 
                 % decide on this voxel recruitment outcome
-                % to join the cluster, at least two of three dist vars need to be 0 and the other 1
-                if dist_compound<=1  % the voxel joins this cluster
+%                 % to join the cluster, at least two of three dist vars need to be 0 and the other 1
+%                 dist_compound = dist_z1 + dist_x2;  % compound distance
+%                 if dist_compound<=1  % the voxel joins this cluster
+%                     voxel_registrationCluster(recruitable_idx) = nClust;
+%                     voxel_registrationStatus(recruitable_idx) = true;
+%                     recruitCounter = recruitCounter + 1;
+%                 end
+                
+                % decide on this voxel recruitment outcome
+                % to join the cluster, both criteria below need to be met
+                conditionA = sqrt( dist_x2^2 ) <= distThreshold;  % 1d proximity
+                conditionB = dist_z1<=1;        % channel neighborhood
+                if conditionA && conditionB
                     voxel_registrationCluster(recruitable_idx) = nClust;
                     voxel_registrationStatus(recruitable_idx) = true;
                     recruitCounter = recruitCounter + 1;
@@ -253,7 +340,7 @@ end
 %% post-processing sanity check
 % plot
 
-if figFlag==1
+if figFlag_cluster==1
     
     % channel x time plot (ie, many 1-d plots)
     figure(6); clf
