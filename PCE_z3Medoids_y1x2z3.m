@@ -53,9 +53,6 @@ nx2 = size(statMat,3);
 % find channels within the cluster
 chansInCluster = unique(z3Matrix(clustIdxMat)); 
 nChansInCluster = length(chansInCluster); % num of chans in the cluster
-if nChansInCluster > 5
-    keyboard
-end
 
 % angular distance matrix, for channels in the cluster
 % (i.e., spacing of a set of n points in angular space)
