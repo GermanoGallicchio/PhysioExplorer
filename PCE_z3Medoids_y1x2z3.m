@@ -53,20 +53,30 @@ nx2 = size(statMat,3);
 % find channels within the cluster
 chansInCluster = unique(z3Matrix(clustIdxMat)); 
 nChansInCluster = length(chansInCluster); % num of chans in the cluster
+if nChansInCluster > 5
+    keyboard
+end
 
 % angular distance matrix, for channels in the cluster
 % (i.e., spacing of a set of n points in angular space)
 angDistmat = angularDistMat(chansInCluster,chansInCluster);
 
 
-% find the mass taken by each channel
-clustStat = statMat(clustIdxMat);  % statistical values for each point within the cluster
-chanMass = nan(1,nChansInCluster);
+% find the robust mass taken by each channel
+clustStat = statMat(clustIdxMat);  % statistical value for each point within the cluster
+clustChan = z3Matrix(clustIdxMat);  % channel corresponding to each point within the cluster
+chanRegularMass = nan(1,nChansInCluster);
+chanRobustMass  = nan(1,nChansInCluster);
 for chanIdx = 1:nChansInCluster
-    chanMass(chanIdx) = sum(clustStat(z3Matrix(clustIdxMat)==chansInCluster(chanIdx)));
+    chanStat = clustStat(clustChan==chansInCluster(chanIdx)); % statistical value for each point within the cluster also corresponding a specific channel
+    chanRegularMass(chanIdx) = mean(chanStat)  * length(chanStat);  % regular mass, equivalent to sum(chanStat)
+    chanRobustMass(chanIdx)  = median(chanStat)* length(chanStat);  % robust mass,  equivalent to sum(chanStat)
 end
-
-
+chanMass = chanRobustMass;
+% sanity check
+if ~isequal(abs(sum(sign(chanMass))),nChansInCluster)
+    error('the numerosity of masses does not correspond with the numerosity of channels describing this cluster')
+end
 
 % medoid
 % the channel within the cluster with the smallest

@@ -1,5 +1,5 @@
 function [z1_MedIdx, z1_wMedIdx] = ...
-    ClusterAnalysis_z1Medoids_z1x2(statMat, clustIdxMat,angularDistMat)
+    PCE_z1Medoids_z1x2(statMat, clustIdxMat,angularDistMat)
 % function to identify the medoid and weighted medoid in a discrete space expressing sensor locations on scalp (and their mass)
 %
 % INPUT: 
@@ -56,13 +56,20 @@ nChansInCluster = length(chansInCluster); % num of chans in the cluster
 angDistmat = angularDistMat(chansInCluster,chansInCluster);
 
 
-% find the mass taken by each channel
+% find the robust mass taken by each channel
 clustStat = statMat(clustIdxMat);  % statistical values for each point within the cluster
-chanMass = nan(1,nChansInCluster);
+chanRegularMass = nan(1,nChansInCluster);
+chanRobustMass  = nan(1,nChansInCluster);
 for chanIdx = 1:nChansInCluster
-    chanMass(chanIdx) = sum(clustStat(z1Matrix(clustIdxMat)==chansInCluster(chanIdx)));
+    chanStat = clustStat(clustChan==chansInCluster(chanIdx)); % statistical value for each point within the cluster also corresponding a specific channel
+    chanRegularMass(chanIdx) = mean(chanStat)  * length(chanStat);  % regular mass, equivalent to sum(chanStat)
+    chanRobustMass(chanIdx)  = median(chanStat)* length(chanStat);  % robust mass,  equivalent to sum(chanStat)
 end
-
+chanMass = chanRobustMass;
+% sanity check
+if ~isequal(abs(sum(sign(chanMass))),nChansInCluster)
+    error('the numerosity of masses does not correspond with the numerosity of channels describing this cluster')
+end
 
 
 % medoid
