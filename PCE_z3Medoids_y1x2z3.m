@@ -77,7 +77,7 @@ if ~isequal(abs(sum(sign(chanMass))),nChansInCluster)
 end
 
 % compute weight H (for _weighted_ medoid)
-H = normalize(-chanMass, 'range', [min(angDistSubsetVec) max(angDistSubsetVec)]);
+H = normalize(-abs(chanMass), 'range', [min(angDistSubsetVec) max(angDistSubsetVec)]);
 
 % medoid
 % the channel within the cluster with the smallest

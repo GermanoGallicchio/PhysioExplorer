@@ -80,7 +80,7 @@ y1_MedIdx = y1Idx(MedIdx);
 x2_MedIdx = x2Idx(MedIdx);
 
 % compute weight H (for _weighted_ medoid)
-H = normalize(-clustStat, 'range', [min(sum(euclDistance,2)) max(sum(euclDistance,2))]);
+H = normalize(-abs(clustStat), 'range', [min(sum(euclDistance,2)) max(sum(euclDistance,2))]);
 
 
 % weighted medoid 

@@ -68,7 +68,7 @@ for rowIdx = 1:nCl
 end 
 
 % compute weight H (for _weighted_ medoid)
-H = normalize(-clustStat, 'range', [min(sum(euclDistance,2)) max(sum(euclDistance,2))]);
+H = normalize(-abs(clustStat), 'range', [min(sum(euclDistance,2)) max(sum(euclDistance,2))]);
 
 
 % medoid
