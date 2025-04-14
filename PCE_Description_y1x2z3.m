@@ -179,6 +179,10 @@ for clIdx = 1:length(clusterMeasure_neg)
     idx = clusterMatrix_neg==clIdx*-1;
     chanInCluster_neg{clIdx} = unique(z3Matrix_lbl(idx))';
 end
+
+
+
+
 % positive
 chanInCluster_pos = cell(1,length(clusterMeasure_pos));
 for clIdx = 1:length(clusterMeasure_pos)
