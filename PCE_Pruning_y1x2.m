@@ -1,5 +1,5 @@
 function [clusterMatrix_corrected, clusterMeasure_corrected] = ...
-    ClusterAnalysis_Correction_y1x2(clusterMatrix, clusterMeasure, clusterThreshold)
+    PCE_Pruning_y1x2(clusterMatrix, clusterMeasure, clusterThreshold)
 
 % ClusterAnalysis_Correction_y1x2 removes clusters in the 2 dimensions
 % based on the H0 derived threshold computed by the previous function
