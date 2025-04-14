@@ -1,5 +1,5 @@
 function [x2_MedIdx, x2_wMedIdx ] = ...
-    ClusterAnalysis_x2Medoids(statMat, clustIdxMat)
+    PCE_x2Medoids(statMat, clustIdxMat)
 
 % function to identify the medoid and weighted medoid in a 1d continuous
 % plane (e.g., time, frequency)
@@ -67,6 +67,9 @@ for rowIdx = 1:nCl
     end
 end 
 
+% compute weight H (for _weighted_ medoid)
+H = normalize(-clustStat, 'range', [min(sum(euclDistance,2)) max(sum(euclDistance,2))]);
+
 
 % medoid
 % the point within the cluster with the smallest
@@ -80,6 +83,6 @@ x2_MedIdx = x2Idx(MedIdx);
 % score and the reciprocal of the absolute value of that point.
 % similar to medoid but we introduce a bias towards points in the cluster that have 
 % larger statistical values
-[~, wMedIdx] = min(sum(euclDistance,2) .* abs(clustStat').^-1);
+[~, wMedIdx] = min(sum(euclDistance,2) .* H);
 x2_wMedIdx = x2Idx(wMedIdx);
 

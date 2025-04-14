@@ -55,6 +55,8 @@ nCl = nnz(clustIdxMat);
 % statistical values for each point within the cluster
 clustStat = statMat(clustIdxMat);  
 
+
+
 % y1 and x2-dimension coordinates for each point within the cluster
 y1Idx = y1Mat(clustIdxMat);
 x2Idx = x2Mat(clustIdxMat);
@@ -77,13 +79,16 @@ end
 y1_MedIdx = y1Idx(MedIdx);
 x2_MedIdx = x2Idx(MedIdx);
 
+% compute weight H (for _weighted_ medoid)
+H = normalize(-clustStat, 'range', [min(sum(euclDistance,2)) max(sum(euclDistance,2))]);
+
 
 % weighted medoid 
 % the point within the cluster with the smallest product of Euclidean distance 
 % score and the reciprocal of the absolute value of that point.
 % similar to medoid but we introduce a bias towards points in the cluster that have 
 % larger statistical values
-[~, wMedIdx] = min(sum(euclDistance,2) .* abs(clustStat).^-1);
+[~, wMedIdx] = min(sum(euclDistance,2) .* H);
 y1_wMedIdx = y1Idx(wMedIdx);
 x2_wMedIdx = x2Idx(wMedIdx);
 

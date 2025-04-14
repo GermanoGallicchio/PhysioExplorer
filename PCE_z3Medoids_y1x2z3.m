@@ -1,5 +1,5 @@
 function [z3_MedIdx, z3_wMedIdx] = ...
-    ClusterAnalysis_z3Medoids_y1x2z3(statMat, clustIdxMat,angularDistMat)
+    PCE_z3Medoids_y1x2z3(statMat, clustIdxMat,angularDistMat)
 
 % function to identify the medoid and weighted medoid in a discrete space expressing sensor locations on scalp (and their mass)
 %
@@ -56,8 +56,9 @@ nChansInCluster = length(chansInCluster); % num of chans in the cluster
 
 % angular distance matrix, for channels in the cluster
 % (i.e., spacing of a set of n points in angular space)
-angDistmat = angularDistMat(chansInCluster,chansInCluster);
-
+angDistSubsetMat = angularDistMat(chansInCluster,chansInCluster);
+% angular distance vector, for each channel in the cluster
+angDistSubsetVec = sum(angDistSubsetMat,1);
 
 % find the robust mass taken by each channel
 clustStat = statMat(clustIdxMat);  % statistical value for each point within the cluster
@@ -75,10 +76,13 @@ if ~isequal(abs(sum(sign(chanMass))),nChansInCluster)
     error('the numerosity of masses does not correspond with the numerosity of channels describing this cluster')
 end
 
+% compute weight H (for _weighted_ medoid)
+H = normalize(-chanMass, 'range', [min(angDistSubsetVec) max(angDistSubsetVec)]);
+
 % medoid
 % the channel within the cluster with the smallest
 % angular distance from the other channels within the same cluster
-[~, MedIdx] = min(sum(angDistmat,1));
+[~, MedIdx] = min(angDistSubsetVec);
 z3_MedIdx = chansInCluster(MedIdx);
 % note (not a bug): if there are only two channels their distance from each
 % other is the same so no winner. the weighted medoid is more protected
@@ -91,5 +95,5 @@ z3_MedIdx = chansInCluster(MedIdx);
 % and the reciprocal of the absolute value of the mass ocucpied by that channel.
 % similar to medoid but we introduce a bias towards channels in the cluster that have 
 % larger statistical values
-[~, wMedIdx] = min(sum(angDistmat,1) .* abs(chanMass).^-1);
+[~, wMedIdx] = min(angDistSubsetVec .* H);
 z3_wMedIdx = chansInCluster(wMedIdx);

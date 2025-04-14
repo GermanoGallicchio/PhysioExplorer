@@ -53,7 +53,9 @@ nChansInCluster = length(chansInCluster); % num of chans in the cluster
 
 % angular distance matrix, for channels in the cluster
 % (i.e., spacing of a set of n points in angular space)
-angDistmat = angularDistMat(chansInCluster,chansInCluster);
+angDistSubsetMat = angularDistMat(chansInCluster,chansInCluster);
+% angular distance vector, for each channel in the cluster
+angDistSubsetVec = sum(angDistSubsetMat,1);
 
 
 % find the robust mass taken by each channel
@@ -71,6 +73,8 @@ if ~isequal(abs(sum(sign(chanMass))),nChansInCluster)
     error('the numerosity of masses does not correspond with the numerosity of channels describing this cluster')
 end
 
+% compute weight H (for _weighted_ medoid)
+H = normalize(-chanMass, 'range', [min(angDistSubsetVec) max(angDistSubsetVec)]);
 
 % medoid
 % the channel within the cluster with the smallest
@@ -88,5 +92,5 @@ z1_MedIdx = chansInCluster(MedIdx);
 % and the reciprocal of the absolute value of the mass ocucpied by that channel.
 % similar to medoid but we introduce a bias towards channels in the cluster that have 
 % larger statistical values
-[~, wMedIdx] = min(sum(angDistmat,1) .* abs(chanMass).^-1);
+[~, wMedIdx] = min(sum(angDistmat,1) .* H);
 z1_wMedIdx = chansInCluster(wMedIdx);
