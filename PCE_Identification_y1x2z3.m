@@ -1,5 +1,8 @@
-function [clusterMatrix, clusterSize, clusterMass, clusterRobMass] = ...
-    PCE_Identification_y1x2z3(statMatrix, pvalMatrix, DimStruct, p_crit, pixelSign, distThreshold, figFlag_cluster, figFlag_proximity)
+function [clusterMatrix, clustIDList, clusterMetrics] = ...
+    PCE_Identification_y1x2z3( ...
+    statMatrix, ...
+    PCE_parameters, ...
+    DimStruct)
 
 % This function identifies clusters in three dimensions: y1, x2, z3.
 % The nature of the dimensions is described in the DimStruct structure.
@@ -68,118 +71,107 @@ function [clusterMatrix, clusterSize, clusterMass, clusterRobMass] = ...
 % written by Germano Gallicchio 
 % germano.gallicchio@gmail.com
 
-%% determine the nature of the dimensions
-
-% determine the analysis design (types of variable) 
-dimensions      = ["y1" "x2" "z3"];
-presentInDesign = zeros(size(dimensions));
-for dimIdx = 1:length(dimensions)
-    presentInDesign(dimIdx) = logical(isfield(DimStruct, dimensions(dimIdx)+"_lbl"));
-end
-Label = repmat("",size(dimensions));
-isContinuous = zeros(size(dimensions));
-isChannel = zeros(size(dimensions));
-for dimIdx = 1:length(dimensions)
-    if presentInDesign(dimIdx)
-        Label(dimIdx) = DimStruct.(dimensions(dimIdx)+"_lbl");
-        isContinuous(dimIdx) = DimStruct.(dimensions(dimIdx)+"_contFlag");
-        if isContinuous(dimIdx)==0
-            isChannel(dimIdx) = contains(DimStruct.(dimensions(dimIdx)+"_lbl"),'channel','IgnoreCase',true);
-        end
-    end
-end
-
-
-% create dimension table
-dimensions = dimensions(:);
-presentInDesign = presentInDesign(:);
-Label = Label(:);
-isContinuous = isContinuous(:);
-isChannel = isChannel(:);
-DimTable = [table(dimensions)  table(Label)  table(presentInDesign) table(isContinuous) table(isChannel)];
-% give feedback to user
-% disp(DimTable(DimTable.presentInDesign==1,:))
-% fprintf("dimensions to use: " +join(DimTable.dimensions(DimTable.presentInDesign==1)) + "\n")
-
-designLabel = join(DimTable.Label(DimTable.presentInDesign==1),'_');
-
 %% sanity checks
 
-if DimStruct.z3_contFlag==0
-    %disp('z3 is not continuous (e.g., EEG channels)')
-    chanlocs = DimStruct.z3_chanlocs;
-    neighborMatrix = DimStruct.z3_neighborMatrix;
-else
-    error('z3 is continuous (e.g., time, freq). great but not yet done coded')
-end
+% sanity checks for DimStruct structure
+% TO DO
 
-% check that stat matrix has the expected dimensions
-dimVec_obs = size(statMatrix);  % numerosity of each dimension (observed in statMatrix)
-dimVec_exp = [length(DimStruct.y1_vec)  length(DimStruct.x2_vec)  length(DimStruct.z3_chanlocs)]; % numerosity of each dimension (expected from DimStruct)
-if contains(designLabel,'channel','IgnoreCase',true)
-    dimVec_exp = dimVec_exp([3 1 2]);    % move channel to first dimension
-end
-if ~isequal(dimVec_exp, dimVec_obs)
-    error('dimensionality incongruence between statMatrix and what expected based on DimStruct')
-else
-    dimVec = dimVec_obs;
-    clear dimVec_obs dimVec_exp
-end
-switch designLabel
-    case {"Freq_Time_Channel" "FreqEEG_FreqHP_Channel"}
-        nz3 = dimVec(1);
-        ny1 = dimVec(2);
-        nx2 = dimVec(3);
-    case {"Freq_Time" "Freq_Freq" "Time_Time"}
-        ny1 = dimVec(1);
-        nx2 = dimVec(2);
-end
-
+% sanity checks for PCE_parameters structure
+% TO DO
+% if abs(pixelSign)~=1
+%     error('clusterSign must be 1 (positive) or -1 (negative)')
+% end
+% if ~(figFlag_cluster==0 || figFlag_cluster==1 || figFlag_proximity==0 || figFlag_proximity==1)
+%     error('figFlag must be 1=draw figure or 0=don''t')
+% end
 
 % check that stat and pval matrices have the same dimensionality
-if ~isequal(size(statMatrix), size(pvalMatrix))
-    error('statMatrix and pvalMatrix must have the same size')
-end
+% if ~isequal(size(statMatrix), size(pvalMatrix))
+%     error('statMatrix and pvalMatrix must have the same size')
+% end
 
 % check that neighborMatrix is square
-if contains(designLabel,'channel','IgnoreCase',true)
-    if ~isequal(size(neighborMatrix,1), size(neighborMatrix,2))
-        error('neighborMatrix must be a square matrix')
-    end
-end
+% if contains(designLabel,'channel','IgnoreCase',true)
+%     if ~isequal(size(neighborMatrix,1), size(neighborMatrix,2))
+%         error('neighborMatrix must be a square matrix')
+%     end
+% end
 
 % check that statMatrix first dimension is channels
-if contains(designLabel,'channel','IgnoreCase',true)
-    if ~isequal(size(statMatrix,1), size(neighborMatrix,2))
-        error('size(statMatrix,1) must be same as size(neighborMatrix,1)')
-    end
+% if contains(designLabel,'channel','IgnoreCase',true)
+%     if ~isequal(size(statMatrix,1), size(neighborMatrix,2))
+%         error('size(statMatrix,1) must be same as size(neighborMatrix,1)')
+%     end
+% end
+
+sigma_x2 = 6;
+sigma_y1 = 1;
+cLim = [-1 1];
+
+% cluster identification method
+methodList = ["EFthreshold" "curvatureConsensus"];
+methodIdx = find(strcmp(methodList,PCE_parameters.method));
+switch methodIdx
+    case 1 | 2
+        if PCE_parameters.verbose
+            disp(['using: ' methodList{methodIdx}])
+        end
+    otherwise
+        error(['only coded methods are: ' char(join(methodList,', '))])
 end
 
-if abs(pixelSign)~=1
-    error('clusterSign must be 1 (positive) or -1 (negative)')
+% sanity checks on statMatrix
+ny1 = length(DimStruct.y1_vec);
+nx2 = length(DimStruct.x2_vec);
+nz3 = length(DimStruct.z3_chanlocs);
+if ~isequal(size(statMatrix),[ny1 nx2 nz3])
+    error('the dimensions of statMatrix do not agree with the y1, x2, z3 DimStruct structure');
 end
 
-if ~(figFlag_cluster==0 | figFlag_cluster==1 | figFlag_proximity==0 | figFlag_proximity==1)
-    error('figFlag must be 1=draw figure or 0=don''t')
-end
+% get N-dimensional grids corresponding with the points of all dimensions
+[y1Matrix, x2Matrix, z3Matrix] = ndgrid(1:ny1,1:nx2,1:nz3);
+% TO DO: after channel gaussian smoothing is done, replace these names with y1Arrasy_idx etc.
+
+
+distThresholdSquared = PCE_parameters.euclDistThreshold^2;
+
+statMatrix_orig = statMatrix;
 
 %% fig proximity
 
-if figFlag_proximity==1
+if PCE_parameters.figFlag_proximity==1
     % continuity structure along the two continuous dimensions
     % compute the Euclidean distance of each point in a square matrix from its central point.
 
     % create a grid representing the indices of the continuous dimensions, with its center being (0,0)
     distMatrix_halfExtent = 3; % how many indices on each side of the central index?
-    [distMatrix_y1, distMatrix_x2] = ndgrid(-distMatrix_halfExtent:distMatrix_halfExtent,-distMatrix_halfExtent:distMatrix_halfExtent);
-
+    if ny1>1
+        if nx2>1
+            % [y1, x2]
+            [distMatrix_y1, distMatrix_x2] = ndgrid(-distMatrix_halfExtent:distMatrix_halfExtent,-distMatrix_halfExtent:distMatrix_halfExtent);
+        else
+            % [y1, 1]
+            [distMatrix_y1, distMatrix_x2] = ndgrid(-distMatrix_halfExtent:distMatrix_halfExtent,0);
+        end
+    else
+        if nx2>1
+            % [1, x2]
+            [distMatrix_y1, distMatrix_x2] = ndgrid(0,-distMatrix_halfExtent:distMatrix_halfExtent);
+        else
+            % [1, 1]
+            [distMatrix_y1, distMatrix_x2] = 0;
+        end
+    end
+    
     % compute the Euclidean distances from the central point (0,0)
     distMatrix_val = sqrt(distMatrix_y1.^2 + distMatrix_x2.^2);
 
     % cluster search extent
-    distMatrix_val_thresholded = double(distMatrix_val <= distThreshold);
-    distMatrix_val_thresholded(distMatrix_halfExtent+1,distMatrix_halfExtent+1) = 2;
-
+    distMatrix_val_thresholded = zeros(size(distMatrix_val));
+    distMatrix_val_thresholded(distMatrix_val <= distThreshold) = 1;
+    [~, minIdx] = min(distMatrix_val);
+    distMatrix_val_thresholded(minIdx) = 2;
+    
     % plot
     figure(2); clf
     f = gcf; f.Units = 'normalized'; f.Position = [0.6    0.05   0.24    0.4];
@@ -235,158 +227,417 @@ if figFlag_proximity==1
     %title(sprintf('cluster search area (threshold ≤ %d)', distThreshold), 'FontWeight', 'normal');
 end
 
-%% get data
+%% preprocessing
 
-% initialize clusterMatrix
-clusterMatrix = zeros(size(statMatrix));
+switch methodIdx
+    case 1  % EFthreshold
 
-%%
+    case 2  % curvatureConsensus
+        %% gaussian smoothing
+        % of 2d continuous dimensions
 
-% apply threshold (based on p < p_crit) and separate pos from neg pixels
-threshMatrix = pvalMatrix<p_crit;
-threshMatrix = threshMatrix .* sign(statMatrix); % distinguish positive and negative clusters by their sign (+ or -)
+        % gaussian along x2
+        domain_x2 = -ceil(3*sigma_x2):ceil(3*sigma_x2);
+        g_x2 = exp(-domain_x2.^2/(2*sigma_x2^2));
+        g_x2 = g_x2/sum(g_x2); % normalize gaussian to [0, 1]
 
-% find idx of Above-Threshold Pixels (positive or negative, depending on pixelSign)
-ATPixels = find(threshMatrix==pixelSign);
+        % gaussian along y1
+        domain_y1 = -ceil(3*sigma_y1):ceil(3*sigma_y1);
+        g_y1 = exp(-domain_y1.^2/(2*sigma_y1^2));
+        g_y1 = g_y1/sum(g_y1); % normalize gaussian to [0, 1]
 
-% get ND grids corresponding with the above-treshold pixels
-switch designLabel
-    case {"Freq_Time_Channel"  "FreqEEG_FreqHP_Channel"}
-        [z3Matrix, y1Matrix, x2Matrix] = ndgrid(1:nz3,1:ny1,1:nx2);
-    case {"Freq_Time" "Time_Time" "Freq_Freq"}
-        [y1Matrix, x2Matrix] = ndgrid(1:ny1,1:nx2);
-end
+        statMatrix = zeros(size(statMatrix));
+        for z3Idx = 1:nz3
+            temp = conv2(squeeze(statMatrix_orig(z3Idx,:,:)), g_x2, 'same');
+            result = conv2(temp, g_y1', 'same');
+            statMatrix(z3Idx,:,:) = result;
+        end
 
-%% implementation
+        % of channel dimension
+        %...
 
-% from here below, "voxels" is used for "above-threshold voxel"
-nClust = 0; % initialize / clusters numerosity
-voxel_registrationStatus  = false(1,length(ATPixels)); % 0=not belonging to any cluster, 1=member of a cluster
-voxel_registrationCluster = nan(1,length(ATPixels));   % number corresponding to the cluster they belong to
+        %% second partial derivatives
 
-for pixel_idx = 1:length(ATPixels)    % loop through above-threshold pixels
+        partialDerivatives = zeros(1,3); % logic to tell which partial derivatives are computed
 
-    % if this cluster is not registered, register it in the next available cluster
-    if voxel_registrationStatus(pixel_idx)==false
-        nClust = nClust + 1;
-        voxel_registrationStatus(pixel_idx)  = true;
-        voxel_registrationCluster(pixel_idx) = nClust;
-    end
+        % y1 dimension
+        if ny1<=3
+            warning('the second derivative is not meaningful with fewer than 3 points. so i will not apply the second derivative on this dimension')
+        else
+            d2y1 = zeros(size(statMatrix));
+            d2y1(:,2:end-1,:) = statMatrix(:,3:end,:) -2*statMatrix(:,2:end-1,:) +statMatrix(:,1:end-2,:);
+            d2y1(:,1,:)       = statMatrix(:,3,    :) -2*statMatrix(:,2,      :) +statMatrix(:,1,      :); % first edge (1), same as value at index 2
+            d2y1(:,end,:)     = statMatrix(:,end,  :) -2*statMatrix(:,end-1,  :) +statMatrix(:,end-2,  :); % last edge (end), same as value at index end-1
+            partialDerivatives(2) = 1;
+        end
 
-    % search for neighbors
-    toggleSwitch = true; % keep searching until this is true
-    while toggleSwitch==true
-        recruitCounter = 0;
+        % x2 dimension
+        if nx2<=3
+            warning('the second derivative is not meaningful with fewer than 3 points. so i will not apply the second derivative on this dimension')
+        else
+            d2x2 = zeros(size(statMatrix));
+            d2x2(:,:,2:end-1) = statMatrix(:,:,3:end) -2*statMatrix(:,:,2:end-1) +statMatrix(:,:,1:end-2);
+            d2x2(:,:,1)       = statMatrix(:,:,3    ) -2*statMatrix(:,:,2      ) +statMatrix(:,:,1      ); % first edge (1), same as value at index 2
+            d2x2(:,:,end)     = statMatrix(:,:,end  ) -2*statMatrix(:,:,end-1  ) +statMatrix(:,:,end-2  ); % last edge (end), same as value at index end-1
+            partialDerivatives(3) = 1;
+        end
 
-        for recruiter_idx = find(voxel_registrationCluster==nClust)
-            for recruitable_idx = find(voxel_registrationStatus==0)
+        % z3 dimension
+        if nz3>1
+            partialDerivatives(1) = 1;
+            error('this is not coded yet. it will when i use multi channel data') % temporary error
+            % use hyorth laplacian method?
+        end
 
-                % y1 (eg, freq) distance between recruiter and recruitable
-                dist_y1 = abs(y1Matrix(ATPixels(recruiter_idx)) - y1Matrix(ATPixels(recruitable_idx)));
-
-                % x2 (eg, time) distance between recruiter and recruitable
-                dist_x2 = abs(x2Matrix(ATPixels(recruiter_idx)) - x2Matrix(ATPixels(recruitable_idx)));
-                
-                % z3 (eg, channel) "distance" between recruiter and recruitable
-                if z3Matrix(ATPixels(recruiter_idx))==z3Matrix(ATPixels(recruitable_idx)) % they are from the same channel
-                    dist_z3 = 0;
+        % sign consensus among the curvature of each dimension
+        if partialDerivatives(1)
+            if partialDerivatives(2)
+                if partialDerivatives(3)
+                    % active dimensions [1 1 1]
+                    curvatureConsensus = ((sign(d2y1)==sign(d2x2)) & (sign(d2y1)==sign(d2z3))).*sign(d2y1);
                 else
-                    if neighborMatrix(z3Matrix(ATPixels(recruiter_idx)),z3Matrix(ATPixels(recruitable_idx)))==1  % they are from neighboring channels
-                        dist_z3 = 1;
-                    else % they are not from neighboring channels
-                        dist_z3 = 2;
-                    end
+                    % active dimensions [1 1 0]
+                    error('case not encountered yet. it will be coded at a later time')
                 end
-
-                
-                % decide on this voxel recruitment outcome
-                % to join the cluster, at least two of three dist vars need to be 0 and the other 1
-%                 dist_compound = dist_y1 + dist_x2 + dist_z3; % compound distance
-%                 if dist_compound<=1  % the voxel joins this cluster
-%                     voxel_registrationCluster(recruitable_idx) = nClust;
-%                     voxel_registrationStatus(recruitable_idx) = true;
-%                     recruitCounter = recruitCounter + 1;
-%                 end
-
-                % decide on this voxel recruitment outcome
-                % to join the cluster, both criteria below need to be met
-                conditionA = sqrt( dist_y1^2 + dist_x2^2 ) <= distThreshold;  % 2d proximity
-                conditionB = dist_z3<=1;        % channel neighborhood
-                if conditionA && conditionB
-                    voxel_registrationCluster(recruitable_idx) = nClust;
-                    voxel_registrationStatus(recruitable_idx) = true;
-                    recruitCounter = recruitCounter + 1;
+            else
+                if partialDerivatives(3)
+                    % active dimensions [1 0 1]
+                    error('case not encountered yet. it will be coded at a later time')
+                else
+                    % active dimensions [1 0 0]
+                    error('case not encountered yet. it will be coded at a later time')
+                end
+            end
+        else
+            if partialDerivatives(2)
+                if partialDerivatives(3)
+                    % active dimensions [0 1 1]
+                    curvatureConsensus = (sign(d2y1)==sign(d2x2)).*sign(d2y1);
+                else
+                    % active dimensions [0 1 0]
+                    error('case not encountered yet. it will be coded at a later time')
+                end
+            else
+                if partialDerivatives(3)
+                    % active dimensions [0 0 1]
+                    error('case not encountered yet. it will be coded at a later time')
+                else
+                    % active dimensions [0 0 0]
+                    error('no dimension active')
                 end
             end
         end
-        
-        % continue as long as there is a new recruit
-        if recruitCounter==0
-            toggleSwitch = false;
-        end
+end
 
+%% cluster forming
+% find cluster IDs
+
+switch methodIdx
+    case 1 % EFthreshold
+        searchMatrix = (abs(statMatrix)>PCE_parameters.EFthreshold .*  PCE_parameters.ignoreMask) .* sign(statMatrix);
+    case 2 % curvatureConsensus
+        searchMatrix = curvatureConsensus;
+end
+
+clusterMatrix = zeros(size(statMatrix)); % initialize. will show cluster membership
+recruitedMatrix = zeros(size(statMatrix)); % initialize. will show if the point has recruited already
+clustID = 0; % initialize / clusters id when multiplied by sign and cluster numerosity at the end of the script
+
+for pnt_idx = find(searchMatrix)'    % loop through the searchMatrix points
+
+    % if this cluster is not assigned, assign it to the next available cluster
+    if recruitedMatrix(pnt_idx)==0
+
+        pnt_sign = sign(searchMatrix(pnt_idx));
+        % the next available positive or negative cluster ID
+        if pnt_sign > 0
+            clustID = max(clusterMatrix(:)) + pnt_sign;
+        else
+            clustID = min(clusterMatrix(:)) + pnt_sign;
+        end
+        clusterMatrix(pnt_idx) = clustID;
+        firstRecruiter = true;
+    else
+        continue % move on to the next point
     end
 
+    % chase down all neighbors that should belong to this cluster but are not assigned yet
+    recruiting = true;
+    while recruiting
+        
+        if firstRecruiter
+            recruiter_idx_List = pnt_idx;
+        end
+
+        for recruiter_idx = recruiter_idx_List
+            
+            % find neighbors. points need to be...
+            % ...in the searchMatrix and with the same sign as pnt_idx
+            if firstRecruiter
+                criterion1 = searchMatrix==pnt_sign;
+            end
+            % ...unassigned
+            criterion2 = clusterMatrix==0;
+            % ...euclidean distance less than or equal to input value
+            [pnt_y1, pnt_x2, pnt_z3] = ind2sub(size(clusterMatrix), recruiter_idx);
+            %criterion3 = sqrt( (y1Matrix-pnt_y1).^2 + (x2Matrix-pnt_x2).^2 ) <= distThreshold;
+            criterion3 = (y1Matrix-pnt_y1).^2 + (x2Matrix-pnt_x2).^2 <= distThresholdSquared;
+            % ...angular distance less than or equal to input value
+% TO DO when also using channels
+% copy from previous z3 script 
+            criterion4 = ones(size(clusterMatrix));
+            criteria = criterion1 & criterion2 & criterion3 & criterion4;
+            
+            %find(criteria)
+
+            % assign these points to this cluster
+            clusterMatrix(criteria) = clustID;
+            
+            % append the new recruiter to the recruiter list
+            recruiter_idx_List = [recruiter_idx_List   find(criteria)'];
+            if firstRecruiter==true
+                firstRecruiter = false;
+            end
+            
+            % remove the current recruiter from the recruiter list
+            % this recruiter has recruited
+            recruitedMatrix(recruiter_idx) = 1;  
+            %recruiter_idx_List = setdiff(recruiter_idx_List,find(recruitedMatrix==1)); 
+            isRecruited = ismember(recruiter_idx_List,find(recruitedMatrix==1));
+            recruiter_idx_List = recruiter_idx_List(~isRecruited);
+
+            % stop recruiting if there are no new recruiters
+            if isempty(recruiter_idx_List)
+                recruiting = false;
+            end
+        end
+    end
+    
 end
 
 % update clusterMatrix
-clusterMatrix(ATPixels) = voxel_registrationCluster;
-clusterMatrix = clusterMatrix*pixelSign;  % if clusters are negative, make the registration number negative too
+clusterMatrix(isnan(clusterMatrix)) = 0;
+
+clustIDList = unique(clusterMatrix(clusterMatrix~=0));
+nClust = length(clustIDList);
+
+%%
+
+%% compute support areas
+
+% nsupportRegion = 0; % initialize / clusters id when multiplied by sign and cluster numerosity at the end of the script
+% if clustID>0
+% 
+%     supportRegionMatrix = nan(size(statMatrix)); % initialize. will show supportRegion membership
+%     recruitedMatrix = zeros(size(statMatrix)); % initialize. will show if the point has recruited already
+%     
+% 
+%     for pnt_idx = find(sign(statMatrix)==pixelSign)'    % loop through all points
+% 
+%         % if this supportRegion is not assigned, assign it to the next available supportRegion
+%         if isnan(supportRegionMatrix(pnt_idx))
+%         %if isnan(supportRegionMatrix(pnt_idx)) && sign(statMatrix(pnt_idx))==pixelSign
+%             nsupportRegion = nsupportRegion + 1;
+%             supportRegionMatrix(pnt_idx) = nsupportRegion;
+%             firstRecruiter = true;
+%         else
+%             continue
+%         end
+% 
+%         recruiting = true;
+%         while recruiting
+% 
+%             % chase down all neighbors of neighbors that should belong to this supportRegion but are not assigned yet
+%             if firstRecruiter
+%                 recruiter_idx_List = pnt_idx;
+%             end
+% 
+%             for recruiter_idx = recruiter_idx_List
+% 
+%                 % find neighbors. points need to be...
+%                 % ...with the correct sign (positive or negative)
+% %                 if firstRecruiter==true
+%                     criterion1 = sign(statMatrix)==pixelSign;
+% %                 end
+%                 % ...unassigned
+%                 criterion2 = isnan(supportRegionMatrix);
+%                 % ...euclidean distance less than or equal to input value
+%                 [pnt_z3, pnt_y1, pnt_x2] = ind2sub(size(supportRegionMatrix), recruiter_idx);
+%                 %criterion3 = sqrt( (y1Matrix-pnt_y1).^2 + (x2Matrix-pnt_x2).^2 ) <= distThreshold;
+%                 criterion3 = (y1Matrix-pnt_y1).^2 + (x2Matrix-pnt_x2).^2 <= distThresholdSquared;
+%                 % ...angular distance less than or equal to input value
+%                 % TO DO when also using channels
+%                 criterion4 = ones(size(clusterMatrix));
+%                 criteria = criterion1 & criterion2 & criterion3 & criterion4;
+% 
+%                 % assign these points to this cluster
+%                 supportRegionMatrix(criteria) = nsupportRegion;
+% 
+%                 % append the new recruiter to the recruiter list
+%                 recruiter_idx_List = [recruiter_idx_List   find(criteria)'];
+%                 if firstRecruiter==true
+%                     firstRecruiter = false;
+%                 end
+% 
+%                 % remove the current recruiter from the recruiter list
+%                 % this recruiter has recruited
+%                 recruitedMatrix(recruiter_idx) = 1;
+%                 %recruiter_idx_List = setdiff(recruiter_idx_List,find(recruitedMatrix==1));
+%                 isRecruited = ismember(recruiter_idx_List,find(recruitedMatrix==1));
+%                 recruiter_idx_List = recruiter_idx_List(~isRecruited);
+% 
+%                 % stop recruiting if there are no new recruiters
+%                 if isempty(recruiter_idx_List)
+%                     recruiting = false;
+%                 end
+%             end
+%         end
+% 
+%     end
+% 
+%     % update clusterMatrix
+%     supportRegionMatrix(isnan(clusterMatrix)) = 0;
+%     supportRegionMatrix = supportRegionMatrix*pixelSign;  % if supportRegion are negative, make the registration number negative too
+% 
+% end
+
+%% visual inspection
+
+% active dimensions [0 1 1]
+% one 2d plot, % to do: include cluster metric with the contour line
+
+if PCE_parameters.figFlag_cluster==1
+    
+    % one 2d plot
+    if ny1>1  &  nx2>1
+        figure(6); clf
+        lyt = tiledlayout('flow');
+        z3Idx = randi(nz3,1)
+
+        nexttile(lyt)
+        mat2plot = squeeze(statMatrix_orig(z3Idx,:,:));
+        contour2plot_neg = logical(squeeze(clusterMatrix(z3Idx,:,:)<0));
+        contour2plot_pos = logical(squeeze(clusterMatrix(z3Idx,:,:)>0));
+        im = imagesc(DimStruct.x2_vec,DimStruct.y1_vec,mat2plot);
+
+        im.Parent.YAxis.Label.String = DimStruct.y1_lbl;
+        im.Parent.YScale = 'log';
+        im.Parent.YDir = 'normal';
+        im.Parent.YLim = DimStruct.y1_vec([1 end]);
+        im.Parent.XAxis.Label.String = DimStruct.x2_lbl;
+        im.Parent.XLim = DimStruct.x2_vec([1 end]);
+        im.Parent.CLim = cLim;
+
+        colormap("turbo")
+        hold on
+        contour(DimStruct.x2_vec,DimStruct.y1_vec,contour2plot_neg, 1,'LineColor',[1 0 0],'LineWidth',1, 'LineStyle','-');
+        contour(DimStruct.x2_vec,DimStruct.y1_vec,contour2plot_pos, 1,'LineColor',[0 0 1],'LineWidth',1, 'LineStyle','-');
+        title([ DimStruct.z3_lbl ': ' DimStruct.z3_chanlocs(z3Idx).labels])
+
+        colorbar
+
+        sgtitle(['num of clusters: ' num2str(nClust)])
+    end
+
+    % one 1d plot
+    if (ny1>1 && nx2==1)  ||  (ny1==1 && nx2>1)
+        figure(7); clf
+        lyt = tiledlayout('flow');
+        z3Idx = randi(nz3,1);
+        
+        nexttile(lyt)
+        if (ny1>1 && nx2==1)
+            horizAxisVals = DimStruct.y1_vec;
+            horizAxisLbl = DimStruct.y1_lbl;
+            horizAxisLim = DimStruct.y1_vec([1 end]);
+        elseif (ny1==1 && nx2>1)
+            horizAxisVals = DimStruct.x2_vec;
+            horizAxisLbl = DimStruct.x2_lbl;
+            horizAxisLim = DimStruct.x2_vec([1 end]);
+            
+        end
+        line2plot = squeeze(statMatrix(:,:,z3Idx));
+
+        line2plot_negIdx = logical(squeeze(clusterMatrix(:,:,z3Idx)<0));
+        line2plot_posIdx = logical(squeeze(clusterMatrix(:,:,z3Idx)>0));
+        pl = plot(horizAxisVals,line2plot,'.-','Color',[0 0 0]);
+        pl.Parent.XAxis.Label.String = horizAxisLbl;
+        pl.Parent.XLim = horizAxisLim;
+        hold on
+        line(repmat(pl.Parent.XLim',1,2), PCE_parameters.EFthreshold*[-1 1; -1 1],'LineStyle','--')
+        plot(horizAxisVals(line2plot_negIdx),line2plot(line2plot_negIdx),'.','Color',[0 0 1]);
+        plot(horizAxisVals(line2plot_posIdx),line2plot(line2plot_posIdx),'.','Color',[1 0 0]);
+        hold on
+        title([ DimStruct.z3_lbl ': ' DimStruct.z3_chanlocs(z3Idx).labels])
+
+        sgtitle(['num of clusters: ' num2str(nClust)])
+    end
+
+    % TO DO:
+    % scalp maps
+%     figure(7); clf
+%     y1Idx = randi(ny1);  % pick a time point at random
+%     x2Idx = randi(nx2);  % pick a time point at random
+%     radius = 0.70; % for plotting reasons only (radius is not in the computations)
+%     nexttile()
+%     surrogateData = randn(1,nz3);
+%     % all chans
+%     topoplot(surrogateData, chanlocs, 'electrodes', 'on', 'style', 'blank', 'plotrad',radius, 'headrad', 0.5, 'emarker', {'o','k',3,1}); hold on;  % plot all channels
+%     clusters = nonzeros(unique(clusterMatrix(:,y1Idx,x2Idx)));
+%     tmpCol = lines(length(clusters));
+%     counter = 0;
+%     for clusterIdx = clusters'
+%         counter = counter +1;
+%         % cluster chans
+%         chan2plot = find(clusterMatrix(:,y1Idx,x2Idx)==clusterIdx);
+%         topoplot(surrogateData(chan2plot), chanlocs(chan2plot),  'electrodes', 'on', 'style', 'blank', 'plotrad',radius, 'headrad', 0, 'emarker', {'.',tmpCol(counter,:) ,15,5}); hold on; % plot neighbors of seed channels
+%     end
+%     title({['y1-dim point: ' num2str(y1Idx)]  ['x2-dim point: ' num2str(x2Idx)]})
+%     colormap(lines)
+end
+
+
+
+
+% active dimensions [1 1 1]
+% one 2d plot (take one random z3 point)
+% one scalp map (take one random y1 and x2 points)
 
 %% compute cluster statistics (e.g., size, mass, robust mass)
+% - cluster size in points
+% - cluster mass (classic), sum of coefficients
+% - cluster normalized mass, extent is normalized to the dimensional space % TO DO: NB: this requires all points to be of the same sign in statMatrix which is not always the case for curvatureConsensus
 
-clusterSize    = nan(1,nClust); % initialize
-clusterMass    = nan(1,nClust); % initialize
-clusterRobMass = nan(1,nClust); % initialize
+clusterMetrics = struct(); % initialize
 for clIdx = 1:nClust
-    idx = clusterMatrix==clIdx*pixelSign; % idx of pixels belonging to this cluster
+    idx = clusterMatrix==clustIDList(clIdx); % idx of pixels belonging to this cluster
 
-    clusterSize(clIdx)    = sum(idx(:));
-    clusterMass(clIdx)    = mean(statMatrix(idx))   * clusterSize(clIdx); % can be positive or negative depending on content (ie, interest in pos or neg clusters)
-    clusterRobMass(clIdx) = median(statMatrix(idx)) * clusterSize(clIdx); % can be positive or negative depending on content (ie, interest in pos or neg clusters)
-
-    % sanity check: all stat values within this cluster have the same sign
-    if pixelSign*sum(sign(statMatrix(idx)))~=sum(idx(:))
-        error('this cluster contains a mix of positive and negative stats values. likely a bug in the code')
+    % sanity check: all values within this cluster have the same sign in the searchMatrix, not the statMatrix
+    if (sign(clustIDList(clIdx))*sum(sign(searchMatrix(idx))))~=sum(idx(:))
+        error('this cluster contains a mix of positive and negative values. likely a bug in the code within or outside this function')
     end
+
+%     % find which support region this cluster belongs to
+%     searching = true;
+%     while searching
+%         for srIdx = 1:nsupportRegion
+%             sr_idx = supportRegionMatrix==srIdx*pixelSign; % idx of points belonging to this supportRegion
+% 
+%             if sum(sr_idx(:)+idx(:)==2)==sum(idx(:)==1)
+%                 searching = false;
+%                 break
+%             else
+%                 if sum(sr_idx(:)+idx(:)==2)>0
+%                     error('the cluster is not fully contained in the support area. very likely a bug')
+%                 end
+%             end
+%         end
+%     end
+
+    clusterMetrics(clIdx).id       = clustIDList(clIdx);
+    clusterMetrics(clIdx).size     = sum(idx(:));
+    clusterMetrics(clIdx).mass     = sum(statMatrix(idx)); % can be positive or negative depending on content (ie, interest in pos or neg clusters)
 
 end
 
-%% post-processing sanity check
-% plot
 
-if figFlag_cluster==1
-    
-    % channel x freq x time plot (ie, many 2-d plots)
-    figure(6); clf
-    lyt = tiledlayout('flow');
-    for chanIdx = 1:nz3
-        nexttile(lyt)
-        mat2plot = squeeze(clusterMatrix(chanIdx,:,:));
-        imagesc(1:nx2,1:ny1,mat2plot)
-        title(['chan ' num2str(chanIdx)])
-    end
-    sgtitle(['num of clusters: ' num2str(nClust)])
-
-
-    % scalp maps
-    figure(7); clf
-    y1Idx = randi(ny1);  % pick a time point at random
-    x2Idx = randi(nx2);  % pick a time point at random
-    radius = 0.70; % for plotting reasons only (radius is not in the computations)
-    nexttile()
-    surrogateData = randn(1,nz3);
-    % all chans
-    topoplot(surrogateData, chanlocs, 'electrodes', 'on', 'style', 'blank', 'plotrad',radius, 'headrad', 0.5, 'emarker', {'o','k',3,1}); hold on;  % plot all channels
-    clusters = nonzeros(unique(clusterMatrix(:,y1Idx,x2Idx)));
-    tmpCol = lines(length(clusters));
-    counter = 0;
-    for clusterIdx = clusters'
-        counter = counter +1;
-        % cluster chans
-        chan2plot = find(clusterMatrix(:,y1Idx,x2Idx)==clusterIdx);
-        topoplot(surrogateData(chan2plot), chanlocs(chan2plot),  'electrodes', 'on', 'style', 'blank', 'plotrad',radius, 'headrad', 0, 'emarker', {'.',tmpCol(counter,:) ,15,5}); hold on; % plot neighbors of seed channels
-    end
-    title({['y1-dim point: ' num2str(y1Idx)]  ['x2-dim point: ' num2str(x2Idx)]})
-    colormap(lines)
-end
