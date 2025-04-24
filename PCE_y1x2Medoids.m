@@ -55,8 +55,6 @@ nCl = nnz(clustIdxMat);
 % statistical values for each point within the cluster
 clustStat = statMat(clustIdxMat);  
 
-
-
 % y1 and x2-dimension coordinates for each point within the cluster
 y1Idx = y1Mat(clustIdxMat);
 x2Idx = x2Mat(clustIdxMat);
@@ -81,7 +79,7 @@ x2_MedIdx = x2Idx(MedIdx);
 
 % compute weight H (for _weighted_ medoid)
 H = normalize(-abs(clustStat), 'range', [min(sum(euclDistance,2)) max(sum(euclDistance,2))]);
-
+H = H(:); % force H to be a column vector
 
 % weighted medoid 
 % the point within the cluster with the smallest product of Euclidean distance 
