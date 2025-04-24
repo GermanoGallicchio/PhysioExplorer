@@ -109,7 +109,7 @@ sigma_y1 = 1;
 cLim = [-1 1];
 
 % cluster identification method
-methodList = ["EFthreshold" "curvatureConsensus"];
+methodList = ["threshold" "geometric"];
 methodIdx = find(strcmp(methodList,PCE_parameters.method));
 switch methodIdx
     case 1 | 2
@@ -124,13 +124,12 @@ end
 ny1 = length(DimStruct.y1_vec);
 nx2 = length(DimStruct.x2_vec);
 nz3 = length(DimStruct.z3_chanlocs);
-if ~isequal(size(statMatrix),[ny1 nx2 nz3])
+if ~isequal(size(statMatrix,2),[ny1*nx2*nz3])
     error('the dimensions of statMatrix do not agree with the y1, x2, z3 DimStruct structure');
 end
 
 % get N-dimensional grids corresponding with the points of all dimensions
 [y1Matrix, x2Matrix, z3Matrix] = ndgrid(1:ny1,1:nx2,1:nz3);
-% TO DO: after channel gaussian smoothing is done, replace these names with y1Arrasy_idx etc.
 
 
 distThresholdSquared = PCE_parameters.euclDistThreshold^2;
@@ -329,24 +328,31 @@ switch methodIdx
         end
 end
 
+adjMatrix = PCE_parameters.adjMatrix;
+
 %% cluster forming
 % find cluster IDs
 
 switch methodIdx
-    case 1 % EFthreshold
-        searchMatrix = (abs(statMatrix)>PCE_parameters.EFthreshold .*  PCE_parameters.ignoreMask) .* sign(statMatrix);
-    case 2 % curvatureConsensus
+    case 1 % threshold
+        searchMatrix = (abs(statMatrix)>PCE_parameters.threshold .*  PCE_parameters.ignoreMask) .* sign(statMatrix);
+    case 2 % geometric
         searchMatrix = curvatureConsensus;
 end
 
 clusterMatrix = zeros(size(statMatrix)); % initialize. will show cluster membership
-recruitedMatrix = zeros(size(statMatrix)); % initialize. will show if the point has recruited already
+%recruitedMatrix = zeros(size(statMatrix)); % initialize. will show if the point has recruited already  // UNUSED, CAN BE DELETED
+queueMatrix = false(size(statMatrix)); % initialize queue matrix
 clustID = 0; % initialize / clusters id when multiplied by sign and cluster numerosity at the end of the script
 
-for pnt_idx = find(searchMatrix)'    % loop through the searchMatrix points
+% apply ignore mask
+searchMatrix = searchMatrix .* PCE_parameters.ignoreMask;
+
+for pnt_idx = find(searchMatrix)    % loop through the searchMatrix points
 
     % if this cluster is not assigned, assign it to the next available cluster
-    if recruitedMatrix(pnt_idx)==0
+    %if recruitedMatrix(pnt_idx)==0
+    if clusterMatrix(pnt_idx)==0
 
         pnt_sign = sign(searchMatrix(pnt_idx));
         % the next available positive or negative cluster ID
@@ -366,51 +372,46 @@ for pnt_idx = find(searchMatrix)'    % loop through the searchMatrix points
     while recruiting
         
         if firstRecruiter
-            recruiter_idx_List = pnt_idx;
+            queueMatrix(pnt_idx) = true;
         end
 
-        for recruiter_idx = recruiter_idx_List
-            
-            % find neighbors. points need to be...
-            % ...in the searchMatrix and with the same sign as pnt_idx
-            if firstRecruiter
-                criterion1 = searchMatrix==pnt_sign;
-            end
-            % ...unassigned
-            criterion2 = clusterMatrix==0;
-            % ...euclidean distance less than or equal to input value
-            [pnt_y1, pnt_x2, pnt_z3] = ind2sub(size(clusterMatrix), recruiter_idx);
-            %criterion3 = sqrt( (y1Matrix-pnt_y1).^2 + (x2Matrix-pnt_x2).^2 ) <= distThreshold;
-            criterion3 = (y1Matrix-pnt_y1).^2 + (x2Matrix-pnt_x2).^2 <= distThresholdSquared;
-            % ...angular distance less than or equal to input value
-% TO DO when also using channels
-% copy from previous z3 script 
-            criterion4 = ones(size(clusterMatrix));
-            criteria = criterion1 & criterion2 & criterion3 & criterion4;
-            
-            %find(criteria)
-
-            % assign these points to this cluster
-            clusterMatrix(criteria) = clustID;
-            
-            % append the new recruiter to the recruiter list
-            recruiter_idx_List = [recruiter_idx_List   find(criteria)'];
-            if firstRecruiter==true
-                firstRecruiter = false;
-            end
-            
-            % remove the current recruiter from the recruiter list
-            % this recruiter has recruited
-            recruitedMatrix(recruiter_idx) = 1;  
-            %recruiter_idx_List = setdiff(recruiter_idx_List,find(recruitedMatrix==1)); 
-            isRecruited = ismember(recruiter_idx_List,find(recruitedMatrix==1));
-            recruiter_idx_List = recruiter_idx_List(~isRecruited);
-
-            % stop recruiting if there are no new recruiters
-            if isempty(recruiter_idx_List)
-                recruiting = false;
-            end
+        % find neighbors. points need to be...
+        % ...in the adjacency matrix
+        % criteria = adjMatrix(recruiter_idx,:); older
+        criteria = adjMatrix(queueMatrix,:);  % some of these points are counted more than once (same of these points share neighbors)
+        criteria = sum(criteria,1)>0;  % this line removed doubles
+        if size(criteria,1)~=1
+            error('criteria should be a row vecor')
         end
+
+        % ...in the searchMatrix and with the same sign as pnt_idx
+        criteria = criteria & searchMatrix==pnt_sign;
+
+        % ...unassigned to a cluster
+        criteria = criteria & clusterMatrix==0;
+
+        % ...not already in the queue (maybe?) NO: DELETE THIS CRITERION
+        %             criteria = criteria & queueMatrix==0;
+
+        % assign these points to this cluster
+        clusterMatrix(criteria) = clustID;
+
+        % remove the current point(s) from the queue (their job is done)
+        %queueMatrix(recruiter_idx) = false; % older
+        queueMatrix(queueMatrix) = false;
+
+        % assign these points to the queue to search their neighbors
+        queueMatrix(criteria) = true;
+
+        if firstRecruiter==true
+            firstRecruiter = false;
+        end
+
+        % stop recruiting for this clusterID if the queue is empty
+        if sum(queueMatrix)==0
+            recruiting = false;
+        end
+        %end
     end
     
 end
@@ -609,6 +610,9 @@ end
 % - cluster normalized mass, extent is normalized to the dimensional space % TO DO: NB: this requires all points to be of the same sign in statMatrix which is not always the case for curvatureConsensus
 
 clusterMetrics = struct(); % initialize
+clusterMetrics_size = zeros(1,nClust);  % TO DO: relabel size to extent
+clusterMetrics_mass = zeros(1,nClust);
+
 for clIdx = 1:nClust
     idx = clusterMatrix==clustIDList(clIdx); % idx of pixels belonging to this cluster
 
@@ -634,10 +638,15 @@ for clIdx = 1:nClust
 %         end
 %     end
 
-    clusterMetrics(clIdx).id       = clustIDList(clIdx);
-    clusterMetrics(clIdx).size     = sum(idx(:));
-    clusterMetrics(clIdx).mass     = sum(statMatrix(idx)); % can be positive or negative depending on content (ie, interest in pos or neg clusters)
+    clusterMetrics_size(1,clIdx) = sum(idx(:));
+    clusterMetrics_mass(1,clIdx) = sum(statMatrix(idx)); % can be positive or negative depending on content (ie, interest in pos or neg clusters)
 
 end
+
+% TO DO: add code to allow choice to save ALL clusters or only MAX(abs())
+clusterMetrics.id       = clustIDList;
+clusterMetrics.size     = clusterMetrics_size;
+clusterMetrics.mass     = clusterMetrics_mass;
+
 
 
