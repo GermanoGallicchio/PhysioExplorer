@@ -41,7 +41,7 @@ function [clusterMatrix_corrected, clusterMeasure_corrected] = ...
 %% sanity checks
 
 % same number of clusters in clusterMatrix and clusterMeasure
-if length(nonzeros(unique(clusterMatrix)))~=length(clusterMeasure)
+if length(nonzeros(unique(clusterMatrix(:))))~=length(clusterMeasure)
     error('clusterMatrix and clusterMass must have the same number of clusters')
 end
 
