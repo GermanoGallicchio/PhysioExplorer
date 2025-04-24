@@ -34,18 +34,19 @@ if ~isequal(size(angularDistMat,1),size(angularDistMat,2))
     error('angularDistMat must be a square matrix')
 end
 
-% first dimension should be z3
-if ~isequal(size(statMat,1),size(angularDistMat,1))
-    error('first dimension of both statMat and clustIdxMat should be z3')
+% third dimension should be z3
+if ~isequal(size(statMat,3),size(angularDistMat,1))
+    error('third dimension of both statMat and clustIdxMat should be z3')
 end
 
 % numerosity of each dimension
-nz3 = size(statMat,1);
-ny1 = size(statMat,2);
-nx2 = size(statMat,3);
+
+ny1 = size(statMat,1);
+nx2 = size(statMat,2);
+nz3 = size(statMat,3);
 
 % 3d grid for each of the two dimensions
-[z3Matrix,     y1Matrix,       x2Matrix]       = ndgrid(1:nz3,1:ny1,1:nx2);
+[y1Matrix, x2Matrix, z3Matrix]       = ndgrid(1:ny1,1:nx2,1:nz3);
 
 
 %% 
