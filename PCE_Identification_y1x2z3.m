@@ -104,20 +104,18 @@ function [clusterMatrix, clustIDList, clusterMetrics] = ...
 %     end
 % end
 
-sigma_x2 = 3;
-sigma_y1 = 1;
+
 cLim = [-1 1];
 
 % cluster identification method
 methodList = ["threshold" "geometric"];
 methodIdx = find(strcmp(methodList,PCE_parameters.method));
-switch methodIdx
-    case {1  2}
-        if PCE_parameters.verbose
-            disp(['using: ' methodList{methodIdx}])
-        end
-    otherwise
-        error(['only coded methods are: ' char(join(methodList,', '))])
+if ~isempty(methodIdx)
+    if PCE_parameters.verbose
+        disp(['using: ' methodList{methodIdx}])
+    end
+else
+    error(['only coded methods are: ' char(join(methodList,', '))])
 end
 
 % sanity checks on statMatrix
@@ -125,7 +123,8 @@ ny1 = length(DimStruct.y1_vec);
 nx2 = length(DimStruct.x2_vec);
 nz3 = length(DimStruct.z3_chanlocs);
 if ~isequal(size(statMatrix,2),[ny1*nx2*nz3])
-    error('the dimensions of statMatrix do not agree with the y1, x2, z3 DimStruct structure');
+    warning('the dimensions of statMatrix do not agree with the y1, x2, z3 DimStruct structure');
+    keyboard
 end
 
 % get N-dimensional grids corresponding with the points of all dimensions
@@ -239,7 +238,9 @@ switch methodIdx
 
         %% gaussian smoothing
         % of 2d continuous dimensions
-        
+        sigma_y1 = PCE_parameters.sigma_y1;
+        sigma_x2 = PCE_parameters.sigma_x2;
+
         % gaussian along x2
         if nx2 > 1
             domain_x2 = -ceil(3*sigma_x2):ceil(3*sigma_x2);
@@ -403,7 +404,7 @@ switch methodIdx
     case 1 % threshold
         searchMatrix = (abs(statMatrix)>PCE_parameters.threshold) .* sign(statMatrix);
     case 2 % geometric
-        searchMatrix = abs(statMatrix) .* curvature ;
+        searchMatrix = abs(statMatrix_orig) .* curvature ;
 end
 
 clusterMatrix = zeros(size(statMatrix)); % initialize. will show cluster membership
