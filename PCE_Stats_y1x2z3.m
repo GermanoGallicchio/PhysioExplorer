@@ -80,6 +80,7 @@ switch PCE_parameters.stats
 end
 
 % subject indices for resampling options
+rng(PCE_parameters.randomSeed)
 if strcmp(PCE_parameters.stats, 'H0MonteCarlo')
     switch PCE_parameters.H0MonteCarlo_replacement
         case false % permutation
@@ -120,17 +121,21 @@ for itIdx = 1:nIterations
                 dataArray(strcmp(group,'A'),:,:));
             tvals = stats.tstat;
             pvals = p;
-            dCohen = (mean(dataArray(strcmp(group,'B'),:,:),1) - mean(dataArray(strcmp(group,'A'),:,:,:,:),1)) ./ std(dataArray(:,:,:),0,1);
+            dCohen = (mean(dataArray(strcmp(group,'B'),:,:),1) - mean(dataArray(strcmp(group,'A'),:,:),1)) ./ std(dataArray(:,:,:),0,1);
         case 'condBvsA_ttest'
             % TO DO
         case 'Pearson_correlation'
-            % TO DO
+            % TO DO: make own correlation function using linear algebra for speed
     end
 
     % cluster identification
     for condIdx = 1:nConditions
-        statMatrix = tvals(:,:,condIdx);
-        [clusterMatrix{1,condIdx}, clustIDList{1,condIdx}, clusterMetrics(condIdx,itIdx)] = PCE_Identification_y1x2z3(statMatrix, PCE_parameters, DimStruct);
+%keyboard
+        statMatrix = tvals(:,:,condIdx); % choose which metric you want for clusters (eg, tvalues, cohensd)
+        [clusterMatrix{1,condIdx}, ...
+            clustIDList{1,condIdx}, ...
+            clusterMetrics(condIdx,itIdx)] = PCE_Identification_y1x2z3(statMatrix, PCE_parameters, DimStruct);
+        
     end
     
     if strcmp(PCE_parameters.stats,'H0MonteCarlo')
@@ -174,7 +179,7 @@ if strcmp(PCE_parameters.stats,'H0MonteCarlo')
     
     % compute threshold corresponding with p_crit
     for msIdx = 1:clusterMeasure_num
-        clustThreshold.(clusterMeasure_lbl{msIdx}) = prctile([clusterMetrics.(clusterMeasure_lbl{msIdx})],100-PCE_parameters.cluster_p_crit *100);
+        clustThreshold.(clusterMeasure_lbl{msIdx}) = prctile(abs([clusterMetrics.(clusterMeasure_lbl{msIdx})]),100-PCE_parameters.cluster_p_crit *100);
     end
 
     % view the distribution
