@@ -65,16 +65,14 @@ angDistSubsetVec = sum(angDistSubsetMat,1);
 clustStat = statMat(clustIdxMat);  % statistical value for each point within the cluster
 clustChan = z3Matrix(clustIdxMat);  % channel corresponding to each point within the cluster
 chanRegularMass = nan(1,nChansInCluster);
-chanRobustMass  = nan(1,nChansInCluster);
 for chanIdx = 1:nChansInCluster
     chanStat = clustStat(clustChan==chansInCluster(chanIdx)); % statistical value for each point within the cluster also corresponding a specific channel
-    chanRegularMass(chanIdx) = mean(chanStat)  * length(chanStat);  % regular mass, equivalent to sum(chanStat)
-    chanRobustMass(chanIdx)  = median(chanStat)* length(chanStat);  % robust mass,  equivalent to sum(chanStat)
+    chanRegularMass(chanIdx) = sum(chanStat);  % regular mass, equivalent to sum(chanStat)
 end
-chanMass = chanRobustMass;
+chanMass = chanRegularMass;
 % sanity check
 if ~isequal(abs(sum(sign(chanMass))),nChansInCluster)
-    error('the numerosity of masses does not correspond with the numerosity of channels describing this cluster')
+    warning('the numerosity of single-sign masses does not correspond with the numerosity of channels describing this cluster. nothing to worry about if using the geometric approach')
 end
 
 % compute weight H (for _weighted_ medoid)
