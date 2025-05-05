@@ -124,7 +124,7 @@ nx2 = length(DimStruct.x2_vec);
 nz3 = length(DimStruct.z3_chanlocs);
 if ~isequal(size(statMatrix,2),[ny1*nx2*nz3])
     warning('the dimensions of statMatrix do not agree with the y1, x2, z3 DimStruct structure');
-    keyboard
+    %keyboard
 end
 
 % get N-dimensional grids corresponding with the points of all dimensions
@@ -133,6 +133,14 @@ end
 
 distThresholdSquared = DimStruct.euclDistThreshold^2;
 
+
+% sanity check statMatrix
+if any(isinf(statMatrix))
+    error('statMatrix contains infinite values')
+end
+if any(isnan(statMatrix))
+    error('statMatrix contains nan values')
+end
 statMatrix_orig = statMatrix;
 
 %% fig proximity
@@ -402,7 +410,7 @@ adjMatrix = PCE_parameters.adjMatrix;
 
 switch methodIdx
     case 1 % threshold
-        searchMatrix = (abs(statMatrix)>PCE_parameters.threshold) .* sign(statMatrix);
+        searchMatrix = (abs(statMatrix)<PCE_parameters.threshold) .* sign(statMatrix);
     case 2 % geometric
         searchMatrix = abs(statMatrix_orig) .* curvature ;
 end
@@ -643,7 +651,7 @@ if PCE_parameters.figFlag_cluster==1
         tmp = reshape(clusterMatrix,[ny1 nx2 nz3]);
         line2plot_negIdx = tmp(:,:,z3Idx) < 0;
         line2plot_posIdx = tmp(:,:,z3Idx) > 0;
-        line(repmat(pl.Parent.XLim',1,2), PCE_parameters.threshold*[-1 1; -1 1],'LineStyle','--')
+        %line(repmat(pl.Parent.XLim',1,2), PCE_parameters.threshold*[-1 1; -1 1],'LineStyle','--')
         line(pl.Parent.XLim, zeros(1,2),'LineStyle','--','Color',[0 0 0 0.2])
 
         plot(horizAxisVals(line2plot_negIdx),line2plot(line2plot_negIdx),'o','Color',[0 0 1]);
@@ -723,10 +731,27 @@ for clIdx = 1:nClust
 
 end
 
-% TO DO: add code to allow choice to save ALL clusters or only MAX(abs())
+
+
 clusterMetrics.id       = clustIDList;
 clusterMetrics.size     = clusterMetrics_size;
 clusterMetrics.mass     = clusterMetrics_mass;
+
+% sanity check: no NaN, no Inf among the clusterMetrics
+% TO DO 
+
+if any(isinf([clusterMetrics.size clusterMetrics.mass]))
+    warning('infinite values in the clusterMetrics')
+    keyboard
+end
+
+if any(isnan([clusterMetrics.size clusterMetrics.mass]))
+    warning('nan values in the clusterMetrics')
+    keyboard
+end
+
+
+
 
 
 
