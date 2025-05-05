@@ -1,6 +1,7 @@
 function [clusterMatrix, clustIDList, clusterMetrics] = ...
     PCE_Identification_y1x2z3( ...
     statMatrix, ...
+    pvalMatrix, ...
     PCE_parameters, ...
     DimStruct)
 
@@ -410,7 +411,7 @@ adjMatrix = PCE_parameters.adjMatrix;
 
 switch methodIdx
     case 1 % threshold
-        searchMatrix = (abs(statMatrix)<PCE_parameters.threshold) .* sign(statMatrix);
+        searchMatrix = (abs(pvalMatrix)<PCE_parameters.threshold) .* sign(statMatrix);
     case 2 % geometric
         searchMatrix = abs(statMatrix_orig) .* curvature ;
 end
