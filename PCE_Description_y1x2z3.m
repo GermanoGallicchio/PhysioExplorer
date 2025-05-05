@@ -34,6 +34,7 @@ function clusterDescr = ...
 
 % clustMaxMass_H0 = clustMaxMass1_H0;
 
+%keyboard
 
 %% sanity checks
 
@@ -60,7 +61,7 @@ nz3 = length(DimStruct.z3_chanlocs);
 % cluster measure (e.g., size, mass)
 nClust = length(clustIDList);
 
-% pvalues at cluster level (this corresponds with the inferential test)
+% oneTail pvalues at cluster level (this corresponds with the inferential test)
 % p value for each cluster (how many more extreme values are there in the H0 dist?)
 clusterMeasure_lbl = fieldnames(clusterMeasure_obs);
 clusterMeasure_lbl = clusterMeasure_lbl(~strcmp(clusterMeasure_lbl,'id')); % remove the 'id' column
@@ -73,11 +74,12 @@ for msIdx = 1:clusterMeasure_num
         pval(clIdx,msIdx) = sum(   abs(obsVal(clIdx))<abs(H0distribution)  ) / length(H0distribution);
     end
 end
-
+%%
 
 % y1 information
 % find 0, 25, 50, 75, 100th prctile of the y1 dimension (e.g., freq) for each cluster
 % negative
+
 y1_0  = nan(1,nClust);
 y1_25 = nan(1,nClust);
 y1_50 = nan(1,nClust);
@@ -197,7 +199,7 @@ for clIdx = 1:nClust
     
     
     for msIdx = 1:clusterMeasure_num
-        clusterDescr(clIdx).([clusterMeasure_lbl{msIdx} '_threshold']) = clustThreshold.(clusterMeasure_lbl{msIdx});
+        clusterDescr(clIdx).([clusterMeasure_lbl{msIdx} '_threshold']) = clustThreshold.([clusterMeasure_lbl{msIdx} '_oneTail']);
         clusterDescr(clIdx).([clusterMeasure_lbl{msIdx} '_measure']) = clusterMeasure_obs.(clusterMeasure_lbl{msIdx})(clIdx);
         clusterDescr(clIdx).([clusterMeasure_lbl{msIdx} '_pvalue'])  = pval(clIdx,msIdx);
     end
