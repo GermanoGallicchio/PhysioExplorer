@@ -51,7 +51,7 @@ end
 %% implementation
 
 % idx clusters to remove
-clusters2remove_idx  = abs(clusterMetrics.(PCE_parameters.clusterMetricChoice)) <= clustThresholdH0.(PCE_parameters.clusterMetricChoice);
+clusters2remove_idx  = abs(clusterMetrics.(PCE_parameters.clusterMetricChoice)) <= clustThresholdH0.([PCE_parameters.clusterMetricChoice '_oneTail']);
 
 % correct clusterMatrix
 clusterMatrix_corrected = clusterMatrix;  % initialize a copy
@@ -68,4 +68,4 @@ for csIdx = 1:clusterMetrics_num
 end
 
 
-disp(['over a total number of ' num2str(length(clusters2remove_idx)) ' cluster, removed: ' num2str(sum(clusters2remove_idx)) ' ' ])
+disp(['over a total number of ' num2str(length(clusters2remove_idx)) ' clusters: removed ' num2str(sum(clusters2remove_idx)) ', retained ' num2str(sum(~clusters2remove_idx))])
