@@ -85,6 +85,12 @@ if strcmp(PE_parameters.test,'group2vs1_ttest')
         group = PE_parameters.group;
         groupLbl = unique(group);
         groupNum = length(groupLbl);
+
+        % numerosity of each group
+        countTbl = countlabels(group);
+        countTbl = sortrows(countTbl,"Label",'ascend'); % enforce ascending order
+        if ~isequal(double(string(countTbl.Label)),groupLbl); warning('error with grouping variable'); keyboard; end
+
     else
         error('need to specify the PE_parameters.group vector for this analysis')
     end
@@ -130,6 +136,11 @@ if strcmp(PE_parameters.test,'condition2vs1_ttest')
         group = PE_parameters.group;
         groupLbl = unique(group);
         groupNum = length(groupLbl);
+
+        % numerosity of each group
+        countTbl = countlabels(group);
+        countTbl = sortrows(countTbl,"Label",'ascend'); % enforce ascending order
+        if ~isequal(double(string(countTbl.Label)),groupLbl); warning('error with grouping variable'); keyboard; end
     end
 end
 
@@ -142,16 +153,24 @@ if contains(PE_parameters.test,'correlation')
         if size(dataArray,1)~=size(correlateVar,1)
             error('the var to correlate should have the same num of rows as dataArray')
         end
-        
-
     else
         error('i need to have a correlation variable. add it to PE_parameters.correlateVar')
     end
+
+    if any(contains(fieldnames(PE_parameters),'group'))
+        group = PE_parameters.group;
+        groupLbl = unique(group);
+        groupNum = length(groupLbl);
+
+        % numerosity of each group
+        countTbl = countlabels(group);
+        countTbl = sortrows(countTbl,"Label",'ascend'); % enforce ascending order
+        if ~isequal(double(string(countTbl.Label)),groupLbl); warning('error with grouping variable'); keyboard; end
+
+    end
+
     if any(contains(fieldnames(PE_parameters),'condition'))
         condition = PE_parameters.condition;
-        if sum(condition~=0)~=1
-            error('i must consider only one condition')
-        end
         nConditions = sum(condition~=0);
     end
 end
@@ -208,11 +227,6 @@ if strcmp(PE_parameters.stats, 'H0MonteCarlo')
             % within their group (groupNum >= 1)
             if PE_parameters.H0MonteCarlo_replacement
 
-                % numerosity of each group
-                countTbl = countlabels(group);
-                countTbl = sortrows(countTbl,"Label",'ascend'); % enforce ascending order
-                if ~isequal(double(string(countTbl.Label)),groupLbl); warning('error with grouping variable'); keyboard; end
-
                 subjIdxH0 = nan(nSubj,nIterations); % initialize
                 for groupIdx = 1:groupNum
                     subjIdxH0_perGroup = randi(countTbl.Count(groupIdx),countTbl.Count(groupIdx),nIterations);
@@ -231,20 +245,73 @@ if strcmp(PE_parameters.stats, 'H0MonteCarlo')
             end
          
         case {'correlation_Pearson'  'correlation_Spearman'  'correlation_Kendall'}
- 
+
             % shuffle participants with or without replacement
             switch PE_parameters.H0MonteCarlo_replacement
                 case false % permutation
-                    subjIdxH0 = nan(nSubj,nIterations); % for permutation: shuffle all subjects
-                    for itIdx = 1:nIterations
-                        subjIdxH0(:,itIdx) = randperm(nSubj,nSubj)';
+
+                    subjIdxH0 = nan(nSubj,nIterations); % initialize
+                    for groupIdx = 1:groupNum
+                        
+                        subjIdxH0_perGroup = zeros(countTbl.Count(groupIdx),nIterations);
+                        for itIdx = 1:nIterations
+                            subjIdxH0_perGroup(:,itIdx) = randperm(countTbl.Count(groupIdx),countTbl.Count(groupIdx));
+                        end
+                        subjIdxH0_perGroup = subjIdxH0_perGroup + (find(group==double(string(countTbl.Label(groupIdx))),1,'first')-1); % add the idx where this group starts
+                        subjIdxH0(group==double(string(countTbl.Label(groupIdx))),:) = subjIdxH0_perGroup;
+                    end
+
+                    % sanity checks: kept the groups separate (participants are randomly sampled without replacement ONLY within their group)
+                    for groupIdx = 1:groupNum
+                        tmp = subjIdxH0(group==double(string(countTbl.Label(groupIdx))),:);
+                        if ~isequal(groupLbl(groupIdx),unique(group(unique(tmp(:)))))
+                            warning('permutation with n groups mixed participants between groups and it shouldn''t have happened')
+                            keyboard
+                        end
                     end
 
                 case true % bootstrap
-                    subjIdxBoot   = randi(nSubj,nSubj,nIterations); % for bootstrap: sample with replacement
-                    subjIdxH0 = nan(nSubj,nIterations); % for bootstrap H0: permute the sample with replacement
-                    for itIdx = 1:nIterations
-                        subjIdxH0(:,itIdx) = subjIdxBoot(randperm(nSubj),itIdx);  % permuted version under H0
+
+                    subjIdxBoot = nan(nSubj,nIterations); % for bootstrap: sample with replacement
+                    subjIdxH0   = nan(nSubj,nIterations); % for H0 bootstrap: sample with replacement and shuffle
+                    for groupIdx = 1:groupNum
+                        
+                        subjIdxBoot_perGroup = randi(countTbl.Count(groupIdx),countTbl.Count(groupIdx),nIterations);
+                        subjIdxBoot_perGroup = subjIdxBoot_perGroup + (find(group==double(string(countTbl.Label(groupIdx))),1,'first')-1); % add the idx where this group starts
+                        subjIdxBoot(group==double(string(countTbl.Label(groupIdx))),:) = subjIdxBoot_perGroup;
+
+                        subjIdxH0_perGroup = zeros(countTbl.Count(groupIdx),nIterations);
+                        for itIdx = 1:nIterations
+                            subjIdxH0_perGroup(:,itIdx) = subjIdxBoot_perGroup(randperm(countTbl.Count(groupIdx),countTbl.Count(groupIdx)),itIdx);
+                        end
+                        subjIdxH0(group==double(string(countTbl.Label(groupIdx))),:) = subjIdxH0_perGroup;
+                    end
+
+                    % sanity checks: kept the groups separate (participants are randomly sampled with replacement ONLY within their group)
+                    for groupIdx = 1:groupNum
+                        tmpBoot = subjIdxBoot(group==double(string(countTbl.Label(groupIdx))),:);
+                        if ~isequal(groupLbl(groupIdx),unique(group(unique(tmpBoot(:)))))
+                            warning('bootstrap mixed participants between groups and it shouldn''t have happened')
+                            keyboard
+                        end
+                        tmpH0 = subjIdxH0(group==double(string(countTbl.Label(groupIdx))),:);
+                        if ~isequal(groupLbl(groupIdx),unique(group(unique(tmpH0(:)))))
+                            warning('H0 bootstrap mixed participants between groups and it shouldn''t have happened')
+                            keyboard
+                        end
+                    end
+
+                    % sanity check: for each iteration, H0 and H0 boot have the same participants
+                    for groupIdx = 1:groupNum
+                        tmpBoot = subjIdxBoot(group==double(string(countTbl.Label(groupIdx))),:);
+                        tmpH0 = subjIdxH0(group==double(string(countTbl.Label(groupIdx))),:);
+
+                        for itIdx = 1:nIterations
+                            if unique(tmpBoot(:,itIdx)) ~= unique(tmpH0(:,itIdx))
+                                error('boot and H0boot have sampled different participants')
+                            end
+                        end
+
                     end
             end
 
@@ -254,7 +321,9 @@ end
 %%  implementation
 
 % TO DO: write my own ttest2 function for speed
+% TO DO: write my own ttest function for speed
 % TO DO: double-check formulas for Cohen's d (see BHD study)
+% TO DO: make own correlation function using linear algebra for speed
 
 
 switch PE_parameters.test
@@ -357,12 +426,11 @@ switch PE_parameters.test
     case {'correlation_Pearson'  'correlation_Spearman'  'correlation_Kendall'}
 
         % initialize vars
-        clusterMetrics  = repmat(struct('id', [], 'size', [], 'mass', []), 1,nIterations);
-        clusterMatrix = cell(1,nConditions);
-        clustIDList = cell(1,nConditions);
+        clusterMetrics  = repmat(struct('id', [], 'size', [], 'mass', []), groupNum, nConditions, nIterations);
+        clusterMatrix = cell(groupNum,nConditions);
+        clustIDList = cell(groupNum,nConditions);
 
         for itIdx = 1:nIterations
-
             % shuffle participants (1st dimension) at each iteration
             if strcmp(PE_parameters.stats,'H0MonteCarlo')
                 dataArray(:,:,:) = dataArray_orig(subjIdxH0(:,itIdx),:,:);
@@ -379,26 +447,33 @@ switch PE_parameters.test
             end
 
             % test
-            % TO DO: make own correlation function using linear algebra for speed
-            [r, p] = corr(dataArray(:,:,logical(condition)),correlateVar,'type',corrType);
-            rvals = r';
-            pvals = p';
+            rvals = zeros(groupNum,DimStruct.ny1*DimStruct.nx2*DimStruct.nz3,nConditions);
+            pvals = zeros(groupNum,DimStruct.ny1*DimStruct.nx2*DimStruct.nz3,nConditions);
+            for groupIdx = 1:groupNum % separately per each group (group >= 1)
+                for condIdx = find(condition)' % separately per each condition (condition >= 1)
 
-            % cluster identification
-            statMatrix = rvals; % choose which metric you want for clusters (eg, tvalues, cohensd)
-            pvalMatrix = pvals;
-            if any(isnan(statMatrix))
-                warning('statMatrix contains nan values')
-                keyboard
+
+                    [r, p] = corr(dataArray(group==double(string(countTbl.Label(groupIdx))),:,condIdx),correlateVar(group==double(string(countTbl.Label(groupIdx)))),'type',corrType);
+                    rvals(groupIdx,:,condIdx) = r;
+                    pvals(groupIdx,:,condIdx) = p;
+
+                    % cluster identification
+                    statMatrix = rvals(groupIdx,:,condIdx); % choose which metric you want for clusters (eg, tvalues, cohensd)
+                    pvalMatrix = pvals(groupIdx,:,condIdx);
+                    if any(isnan(statMatrix))
+                        warning('statMatrix contains nan values')
+                        keyboard
+                    end
+                    [clusterMatrix{groupIdx,condIdx}, clustIDList{groupIdx,condIdx}, clusterMetrics(groupIdx,condIdx,itIdx)] = PE_Identification_y1x2z3(statMatrix, pvalMatrix, PE_parameters, DimStruct);
+
+                end
             end
-            [clusterMatrix{1,1}, clustIDList{1,1}, clusterMetrics(1,itIdx)] = PE_Identification_y1x2z3(statMatrix, pvalMatrix, PE_parameters, DimStruct);
-
+            
 
             if strcmp(PE_parameters.stats,'H0MonteCarlo')
                 progressBar(itIdx,nIterations)
             end
         end
-    
 end
 
 %%
@@ -482,16 +557,32 @@ if strcmp(PE_parameters.stats,'H0MonteCarlo')
 
 
                 case { 'correlation_Pearson'  'correlation_Spearman'  'correlatio_Kendall' }
-                    
-                    for itIdx = 1:nIterations
-                        for msIdx = 1:clusterMeasure_num
-                            [maxVal, maxIdx] = max(abs(clusterMetrics(1,itIdx).(clusterMeasure_lbl{msIdx})));
-                            if maxVal==0; keyboard; end
-                            clusterMetrics(1,itIdx).(clusterMeasure_lbl{msIdx}) = clusterMetrics(1,itIdx).(clusterMeasure_lbl{msIdx})(maxIdx);
+                    for groupIdx = 1:groupNum
+                        for condIdx = find(condition)'
+                            for itIdx = 1:nIterations
+                                for msIdx = 1:clusterMeasure_num
+                                    [maxVal, maxIdx] = max(abs(clusterMetrics(groupIdx,condIdx,itIdx).(clusterMeasure_lbl{msIdx})));
+                                    if maxVal==0; keyboard; end
+                                    clusterMetrics(groupIdx,condIdx,itIdx).(clusterMeasure_lbl{msIdx}) = clusterMetrics(groupIdx,condIdx,itIdx).(clusterMeasure_lbl{msIdx})(maxIdx);
+                                end
+                            end
                         end
                     end
-                    % TO DO: keep most extreme (by removing the non most extreme) per iteration across groups
-                    % TO DO: keep most extreme (by removing the non most extreme) per iteration across conditions
+    
+                    % keep most extreme (by removing the non most extreme) per iteration across groups and conditions
+                    for itIdx = 1:nIterations
+                        for msIdx = 1:clusterMeasure_num
+                            clusterValues = [clusterMetrics(:,:,itIdx).(clusterMeasure_lbl{msIdx})];
+                            [~, maxIdx] = max(abs(clusterValues));
+
+                            nonExtreme = find(logical(~(maxIdx==(1:length(clusterValues)))));
+                            [nonExtreme_group, nonExtreme_cond] = ind2sub([groupNum nConditions],nonExtreme);
+                            for neIdx = 1:length(nonExtreme_group)
+                                clusterMetrics(nonExtreme_group(neIdx),nonExtreme_cond(neIdx),itIdx).(clusterMeasure_lbl{msIdx}) = [];
+                            end
+                            
+                        end
+                    end
 
             end
             
@@ -567,7 +658,7 @@ if strcmp(PE_parameters.stats,'H0MonteCarlo')
                 tltLbl = {
                     ['inference type:' PE_parameters.inference]
                     ['nIterations: ' num2str(nIterations)]
-                    ['groups pooled: ' num2str(nGroup)]
+                    ['groups pooled: ' num2str(groupNum)]
                     ['conditions pooled: ' num2str(nConditions)]
                     };
         end
