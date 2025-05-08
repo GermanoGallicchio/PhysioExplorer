@@ -136,7 +136,7 @@ if strcmp(PE_parameters.test,'condition2vs1_ttest')
         group = PE_parameters.group;
         groupLbl = unique(group);
         groupNum = length(groupLbl);
-
+        
         % numerosity of each group
         countTbl = countlabels(group);
         countTbl = sortrows(countTbl,"Label",'ascend'); % enforce ascending order
