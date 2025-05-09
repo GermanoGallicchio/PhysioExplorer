@@ -733,10 +733,10 @@ for clIdx = 1:nClust
     clusterMetrics_size(1,clIdx) = sum(idx(:));
 
     % cluster mass
-    %clusterMetrics_mass(1,clIdx) = sum(statMatrix_orig(idx)); % can be positive or negative depending on content (ie, interest in pos or neg clusters)
+    clusterMetrics_mass(1,clIdx) = sum(statMatrix_orig(idx)); % can be positive or negative depending on content (ie, interest in pos or neg clusters)
     
     % cluster robust mass
-    clusterMetrics_mass(1,clIdx) = sum(idx(:)) * median(statMatrix_orig(idx)); 
+    %clusterMetrics_mass(1,clIdx) = sum(idx(:)) * median(statMatrix_orig(idx)); 
 end
 
 
