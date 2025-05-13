@@ -41,6 +41,8 @@ function [ neighborMatrix, D, Dbinned ] = ...
 %   on a sphere (i.e., sensor sites have same radius)
 %
 %   Author: Germano Gallicchio (germano.gallicchio@gmail.com)
+%
+% TO DO: in future, remove dependency from eeglab's topoplot by creating my own topoplot function
 
 %% sanity checks
 
@@ -91,6 +93,19 @@ if ~isnumeric(DimStruct.y1_vec) || ~isvector(DimStruct.y1_vec) || ...
    ~isnumeric(DimStruct.x2_vec) || ~isvector(DimStruct.x2_vec)
     error('PE_Adjacency_y1x2z3:InvalidVectors', ...
         'y1_vec and x2_vec must be numeric vectors.');
+end
+
+% check vector lengths
+if isempty(DimStruct.y1_vec) || isempty(DimStruct.x2_vec)
+    error('PE_Adjacency_y1x2z3:EmptyVectors', 'y1_vec and x2_vec must not be empty.');
+end
+
+% check z3_D dimensions
+nChannels = length(DimStruct.z3_chanlocs);
+if ~isequal(size(DimStruct.z3_D), [nChannels, nChannels])
+    error('PE_Adjacency_y1x2z3:InvalidDimensions', ...
+          'z3_D dimensions must match the number of channels (%d x %d).', ...
+          nChannels, nChannels);
 end
 
 if ~isnumeric(DimStruct.euclDistThreshold) || ~isscalar(DimStruct.euclDistThreshold) || ...
@@ -161,6 +176,12 @@ if ~isempty(eeglabPath) && ~exist(eeglabPath, 'dir')
           'The specified EEGLAB path does not exist: %s', eeglabPath);
 end
 
+% topoplot validation
+if topoPlotFig_flag && isempty(eeglabPath)
+    error('PE_ChannelNeighborhood:MissingEEGLABPath', ...
+          'eeglabPath must be provided when topoPlotFig_flag is true.');
+end
+
 %% get info
 
 nChan = length(chanlocs);
@@ -180,6 +201,8 @@ theta = deg2rad(theta);
 phi   = deg2rad(phi);
 
 % compute angular distance between all pairs
+nChan = length(chanlocs);
+D = zeros(nChan, nChan); % initialize D
 for chanAIdx = 1:nChan
     for chanBIdx = 1:nChan
 
@@ -245,11 +268,19 @@ neighborNum = sum(neighborMatrix,1);  % number of neighbors for each channel
 % plot channel neighbors
 if topoPlotFig_flag==1
 
-    % make sure eeglab is open, needed it for the topoplot function
-    if ~exist("EEG",'var')
-        addpath(eeglabPath)
-        eeglab
+    % check EEGLAB path 
+    if ~exist('topoplot', 'file')
+        if isempty(eeglabPath)
+            error('PE_ChannelNeighborhood:EEGLABNotFound', ...
+                  'EEGLAB''s topoplot function not found. Valid eeglabPath must be provided.');
+        end
+        addpath(eeglabPath);
+        if ~exist('topoplot', 'file')
+            error('PE_ChannelNeighborhood:EEGLABNotFound', ...
+                  'topoplot function not found in the provided EEGLAB path.');
+        end
     end
+
 
     % find idx of seed channels
     chanLbl = topoPlotFig_chanLbl; % seed channels
