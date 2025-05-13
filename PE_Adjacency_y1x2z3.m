@@ -1,38 +1,120 @@
 function [adjMatrix] = PE_Adjacency_y1x2z3(DimStruct, adjFig)
-
-
-% This functions creates the adjacency matrix
+% Creates an adjacency matrix for 3D physiological data
+%
+%   [adjMatrix] = PE_Adjacency_y1x2z3(DimStruct, adjFig) generates a sparse
+%   adjacency matrix describing neighborhood relationships across three
+%   dimensions: y1, x2, and z3.
+%
 % 
 % INPUT: 
 %
-% DimStruct         structure defining the dimensions. Following example #1 above
-%                     DimStruct.y1_lbl      = 'Freq';  % label for dimension y1
-%                     DimStruct.y1_contFlag = 1;       % the variable is on one continuous scale 1=yes, 0=no
-%                     DimStruct.y1_vec      = freqVec; % vector of values. needed only if contFlat==1
-%                     DimStruct.y1_units    = 'Hz';    % label for the units of dimension y1. needed only if contFlat==1
-%                     DimStruct.x2_lbl      = 'Time';   % label for dimension x2
-%                     DimStruct.x2_contFlag = 1;        % the variable is on one continuous scale 1=yes, 0=no
-%                     DimStruct.x2_vec      = timeVec;  % vector of values. needed only if contFlat==1
-%                     DimStruct.x2_units    = 's';      % label for the units of dimension x2. needed only if contFlat==1
-%                     DimStruct.z3_lbl      = 'Channel';
-%                     DimStruct.z3_contFlag = 0;
-%                     DimStruct.z3_chanlocs = EEG.chanlocs; % channel locations structure in the eeglab format
-%                     DimStruct.z3_neighborMatrix = neighborMatrix; created by ClusterAnalysis_ChannelNeighborhood.m
+%       DimStruct - Structure containing dimension definitions. y1 and x2
+%       are two continuous dimensions such as time and frequency (but also
+%       time and time or frequency and frequency); z3 is the channel
+%       dimension. any of these dimensions can be empty if working in a
+%       subspace. The structure has fields:
+%           .y1_lbl        - Label for continuous dimension 1 (e.g., 'Freq')
+%           .y1_contFlag   - Flag for continuous scale (1=yes, 0=no)
+%           .y1_vec        - Vector of values defining the dimension (e.g., frequency values)
+%           .y1_units      - Units (e.g., 'Hz')
+%           .x2_lbl        - Label for continuous dimension 2 (e.g., 'Time')
+%           .x2_contFlag   - Flag for continuous scale (1=yes, 0=no)
+%           .x2_vec        - Vector of values defining the dimension (e.g., time points)
+%           .x2_units      - Units (e.g., 's', 'ms')
+%           .z3_lbl        - Label for channel dimension
+%           .z3_contFlag   - Flag for continuous scale (always 0 for channels)
+%           .z3_chanlocs   - Channel locations structure (EEGLAB format)
+%           .z3_neighborMatrix - Channel neighborhood matrix. created by PE_ChannelNeighborhood.m
+%           .euclDistThreshold - Threshold for Euclidean distance in time-frequency
+%           .angDistThreshold  - Threshold for angular distance between channels
+%           .z3_D         - Distance matrix for channels
 %
-% distThreshold     Euclidean distance inclusive threshold ( <= of this threshold) to determine extent of the cluster proximity area in the 2d grid
+%       adjFig - Boolean flag to display spy plot of adjacency matrix
+%
 %
 % OUTPUT:
+%       adjMatrix - Sparse N×N adjacency matrix where N = ny1*nx2*nz3
+%                  Elements are 1 where points are neighbors, 0 otherwise
 %
-% 
-% sparse matrix N * N telling who is neighbor to whom
+% Main idea:
+%   The function determines adjacency based on:
+%   1. Euclidean distance in the temporal-spectral plane
+%   2. Angular distance between channels in the spatial dimension
 %
-% written by Germano Gallicchio 
-% germano.gallicchio@gmail.com
+%   Author: Germano Gallicchio (germano.gallicchio@gmail.com)
 
-%% sanity checks
+%% input sanity checks
 
-% sanity checks for DimStruct structure
-% TO DO
+% check number of input arguments
+narginchk(1, 2);
+
+% default value for adjFig if not provided
+if nargin < 2
+    adjFig = false;
+end
+
+% check DimStruct is a structure
+if ~isstruct(DimStruct)
+    error('PE_Adjacency_y1x2z3:InvalidInput', ...
+        'DimStruct must be a structure.');
+end
+
+% required fields in DimStruct
+required_fields = {'y1_lbl', 'y1_contFlag', 'y1_vec', 'y1_units', ...
+                  'x2_lbl', 'x2_contFlag', 'x2_vec', 'x2_units', ...
+                  'z3_lbl', 'z3_contFlag', 'z3_chanlocs', 'z3_neighborMatrix', ...
+                  'euclDistThreshold', 'angDistThreshold', 'z3_D'};
+
+% check if there are missing fields
+missing_fields = setdiff(required_fields, fieldnames(DimStruct));
+if ~isempty(missing_fields)
+    error('PE_Adjacency_y1x2z3:MissingFields', ...
+          'The following fields are missing in DimStruct: %s', ...
+          strjoin(missing_fields, ', '));
+end
+
+% check data types and dimensions
+if ~ischar(DimStruct.y1_lbl) || ~ischar(DimStruct.x2_lbl) || ~ischar(DimStruct.z3_lbl)
+    error('PE_Adjacency_y1x2z3:InvalidLabels', 'Labels must be character arrays.');
+end
+
+if ~isnumeric(DimStruct.y1_vec) || ~isvector(DimStruct.y1_vec) || ...
+   ~isnumeric(DimStruct.x2_vec) || ~isvector(DimStruct.x2_vec)
+    error('PE_Adjacency_y1x2z3:InvalidVectors', ...
+        'y1_vec and x2_vec must be numeric vectors.');
+end
+
+if ~isnumeric(DimStruct.euclDistThreshold) || ~isscalar(DimStruct.euclDistThreshold) || ...
+   DimStruct.euclDistThreshold <= 0
+    error('PE_Adjacency_y1x2z3:InvalidThreshold', ...
+          'euclDistThreshold must be a positive numeric scalar.');
+end
+
+if ~isnumeric(DimStruct.angDistThreshold) || ~isscalar(DimStruct.angDistThreshold) || ...
+   DimStruct.angDistThreshold <= 0
+    error('PE_Adjacency_y1x2z3:InvalidThreshold', ...
+          'angDistThreshold must be a positive numeric scalar.');
+end
+
+if ~isnumeric(DimStruct.z3_D) || ~ismatrix(DimStruct.z3_D)
+    error('PE_Adjacency_y1x2z3:InvalidDistanceMatrix', ...
+          'z3_D must be a numeric matrix.');
+end
+
+% check continuous flags
+if ~isscalar(DimStruct.y1_contFlag) || ~ismember(DimStruct.y1_contFlag, [0,1]) || ...
+   ~isscalar(DimStruct.x2_contFlag) || ~ismember(DimStruct.x2_contFlag, [0,1]) || ...
+   ~isscalar(DimStruct.z3_contFlag) || ~ismember(DimStruct.z3_contFlag, [0,1])
+    error('PE_Adjacency_y1x2z3:InvalidcontFlags', ...
+          'contFlag fields must be scalar values of 0 or 1.');
+end
+
+% check adjFig is logical
+if ~islogical(adjFig) && ~(isnumeric(adjFig) && ismember(adjFig, [0,1]))
+    error('PE_Adjacency_y1x2z3:InvalidAdjFig', ...
+          'adjFig must be a logical value or 0/1.');
+end
+
 
 %% get data
 
