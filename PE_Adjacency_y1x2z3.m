@@ -84,6 +84,19 @@ if ~isnumeric(DimStruct.y1_vec) || ~isvector(DimStruct.y1_vec) || ...
         'y1_vec and x2_vec must be numeric vectors.');
 end
 
+% check vector lengths
+if isempty(DimStruct.y1_vec) || isempty(DimStruct.x2_vec)
+    error('PE_Adjacency_y1x2z3:EmptyVectors', 'y1_vec and x2_vec must not be empty.');
+end
+
+% check z3_D dimensions
+nChannels = length(DimStruct.z3_chanlocs);
+if ~isequal(size(DimStruct.z3_D), [nChannels, nChannels])
+    error('PE_Adjacency_y1x2z3:InvalidDimensions', ...
+          'z3_D dimensions must match the number of channels (%d x %d).', ...
+          nChannels, nChannels);
+end
+
 if ~isnumeric(DimStruct.euclDistThreshold) || ~isscalar(DimStruct.euclDistThreshold) || ...
    DimStruct.euclDistThreshold <= 0
     error('PE_Adjacency_y1x2z3:InvalidThreshold', ...
