@@ -1,48 +1,56 @@
 function [results, clusterMetrics, clustThreshold] = ...
-    PE_Stats_y1x2z3(dataArray, PE_parameters, DimStruct, group)
+    PE_Stats_y1x2z3(dataArray, ...
+    PE_parameters, ...
+    DimStruct)
+% Performs statistical analysis on EEG data with cluster-based inference
+%
+% [results, clusterMetrics, clustThreshold] = PE_Stats_y1x2z3(dataArray, PE_parameters, DimStruct)
+%
+% This function performs statistical analysis on EEG data using cluster-based inference methods.
+% It supports group comparisons, condition comparisons, and correlation analyses with options
+% for different statistical tests and inference methods.
 
-% <<Description>>
+% INPUT:
+%   dataArray     - 3D array of data: subjects × dimensions × (optional) conditions
 %
-% INPUT: 
+%   PE_parameters - Structure containing analysis parameters:
+%     .test         - Type of test: 'group2vs1_ttest', 'condition2vs1_ttest',
+%                     'correlation_Pearson', 'correlation_Spearman', or 'correlation_Kendall'
+%     .stats        - 'H0MonteCarlo' for permutation/bootstrap or 'observed' for single analysis
+%     .inference    - 'Tmax' for maximum statistic (recommended) or 'Tall' for all clusters (not recommended)
+%     .cluster_p_crit - Critical p-value for clustering
+%     .group        - Vector of group assignments for subjects (all 1s if there is only one group--if only interested in a subset of the sample, change dataArray accordingly)
+%     .H0MonteCarlo_replacement - Boolean for bootstrap (true) vs permutation (false)
+%     .nIterations  - Number of iterations for Monte Carlo methods
+%     .randomSeed   - Seed for random number generator
+%     .verbose      - Boolean for verbose output
 %
-% statMatrix:       matrix of statistical values (e.g., rho, tval) 
-%                   dimensions: 1=chan, 2=time
-% 
-% pvalMatrix        matrix of pvalues associated with statMatrix 
-%                   dimensions: 1=chan, 2=time
+%   DimStruct    - Structure defining data dimensions / same as in earlier functions (e.g., PE_Adjacency_y1x2z3)
 %
-% neighborMatrix    matrix (chan x chan format)
-%                   1=neighbors, 0=no
-%
-% DimStruct         structure defining the dimensions. Following example #1 above
-%                     DimStruct.z1_lbl      = 'Channel';
-%                     DimStruct.z1_contFlag = 0;
-%                     DimStruct.z1_chanlocs = EEG.chanlocs; % channel locations structure in the eeglab format
-%                     DimStruct.z1_neighborMatrix = neighborMatrix; created by ClusterAnalysis_ChannelNeighborhood.m
-%                     DimStruct.x2_lbl      = 'Time';   % label for dimension x2
-%                     DimStruct.x2_contFlag = 1;        % the variable is on one continuous scale 1=yes, 0=no
-%                     DimStruct.x2_vec      = timeVec;  % vector of values. needed only if contFlat==1
-%                     DimStruct.x2_units    = 's';      % label for the units of dimension x2. needed only if contFlat==1
-%
-% p_crit            1 digit represeting critical p value (e.g., 0.05) for clustering purposes only
-%
-% pixelSign         1 or -1 to search, respectively, for clusters with positive or negative statitical values
-%
-% figFlag           1=plot figure, 0=don't
 %
 % OUTPUT:
 %
-% clusterMatrix 
+%   results        - Structure containing test results (depending on the statistical test):
+%     .tvals        - t-values (for t-tests)
+%     .dCohen       - Cohen's d effect sizes (for t-tests)
+%     .rvals        - Correlation coefficients (for correlation analyses)
+%     .pvals        - p-values
+%     .clusterMatrix - Matrix identifying clusters
+%     .clustIDList  - List of cluster IDs
 %
-% clusterSize 
-% 
-% clusterMass 
-% 
-% clusterRobMass
+%   clusterMetrics - Structure array with cluster statistics:
+%     .id          - Cluster identifiers
+%     .size        - Cluster sizes
+%     .mass        - Cluster masses
 %
-% 
-% written by Germano Gallicchio 
-% germano.gallicchio@gmail.com
+%   clustThreshold - Structure containing threshold values for cluster inference:
+%     .size_oneTail   - One-tailed threshold for cluster size
+%     .size_twoTails  - Two-tailed thresholds for cluster size
+%     .mass_oneTail   - One-tailed threshold for cluster mass
+%     .mass_twoTails  - Two-tailed thresholds for cluster mass
+%
+%
+% Author: Germano Gallicchio (germano.gallicchio@gmail.com)
 
 %% sanity checks
 
