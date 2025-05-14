@@ -695,14 +695,13 @@ end
 % one 2d plot (take one random z3 point)
 % one scalp map (take one random y1 and x2 points)
 
-%% compute cluster statistics (e.g., size, mass, robust mass)
+%% compute cluster statistics (e.g., size, mass)
 % - cluster size in points
 % - cluster mass (classic), sum of coefficients
-% - cluster normalized mass, extent is normalized to the dimensional space % TO DO: NB: this requires all points to be of the same sign in statMatrix which is not always the case for curvatureConsensus
 
 clusterMetrics = struct(); % initialize
-clusterMetrics_size = zeros(1,nClust);  % TO DO: relabel size to extent
-clusterMetrics_mass = zeros(1,nClust);
+clusterMetrics_size     = zeros(1,nClust);  % TO DO: relabel size to numerosity
+clusterMetrics_mass     = zeros(1,nClust);
 
 for clIdx = 1:nClust
     idx = clusterMatrix==clustIDList(clIdx); % idx of pixels belonging to this cluster
@@ -730,20 +729,19 @@ for clIdx = 1:nClust
 %     end
 
     % cluster numerosity
-    clusterMetrics_size(1,clIdx) = sum(idx(:));
+    clusterMetrics_size(1,clIdx) = sum(idx(:)); % TO DO: change this to numerosity (better term than size)
 
     % cluster mass
+    % clusterMass = clusterSum = clusterMean * clusterNumerosity
     clusterMetrics_mass(1,clIdx) = sum(statMatrix_orig(idx)); % can be positive or negative depending on content (ie, interest in pos or neg clusters)
-    
-    % cluster robust mass
-    %clusterMetrics_mass(1,clIdx) = sum(idx(:)) * median(statMatrix_orig(idx)); 
+   
 end
 
 
 
-clusterMetrics.id       = clustIDList;
-clusterMetrics.size     = clusterMetrics_size;
-clusterMetrics.mass     = clusterMetrics_mass;
+clusterMetrics.id        = clustIDList;
+clusterMetrics.size      = clusterMetrics_size;
+clusterMetrics.mass      = clusterMetrics_mass;
 
 % sanity check: no NaN, no Inf among the clusterMetrics
 % TO DO 
