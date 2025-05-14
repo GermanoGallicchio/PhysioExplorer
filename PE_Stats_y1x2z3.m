@@ -229,9 +229,22 @@ if strcmp(PE_parameters.stats, 'H0MonteCarlo')
 
                 subjIdxH0 = nan(nSubj,nIterations); % initialize
                 for groupIdx = 1:groupNum
-                    subjIdxH0_perGroup = randi(countTbl.Count(groupIdx),countTbl.Count(groupIdx),nIterations);
-                    subjIdxH0_perGroup = subjIdxH0_perGroup + (find(group==double(string(countTbl.Label(groupIdx))),1,'first')-1); % add the idx where this group starts
-                    subjIdxH0(group==double(string(countTbl.Label(groupIdx))),:) = subjIdxH0_perGroup;
+                    % earlier code (can be deleted if the newer works well)
+                    %subjIdxH0_perGroup = randi(countTbl.Count(groupIdx),countTbl.Count(groupIdx),nIterations);
+                    %subjIdxH0_perGroup = subjIdxH0_perGroup + (find(group==double(string(countTbl.Label(groupIdx))),1,'first')-1); % add the idx where this group starts
+                    %subjIdxH0(group==double(string(countTbl.Label(groupIdx))),:) = subjIdxH0_perGroup;
+
+                    % newer code ---
+                    groupMask = group==groupLbl(groupIdx);
+                    nGroupSubj = sum(groupMask);
+                    groupIndices = find(groupMask);
+                    % bootstrap within each group separately
+                    for itIdx = 1:nIterations
+                        bootIndices = groupIndices(randi(nGroupSubj, [nGroupSubj, 1]));
+                        subjIdxH0(groupMask,itIdx) = bootIndices;
+                    end
+                    % ---
+                    
                 end
                 
                 % sanity checks: kept the groups separate (participants are  randomly sampled with replacement ONLY within their group)
@@ -341,14 +354,25 @@ switch PE_parameters.test
                 dataArray(:,:,:) = dataArray_orig(subjIdxH0(:,itIdx),:,:);
             end
 
-            % test
+            % t-test
             [~,p,~,stats] = ttest2( ...
                 dataArray(group==2,:,:), ...
                 dataArray(group==1,:,:));
 
+            % Mann-Whitney U Test (aka Wilcoxon Rank-Sum Test)
+%             [p, ~, stats] = ranksum( ...
+%                 dataArray(group==2,:,:), ...
+%                 dataArray(group==1,:,:))
+
             tvals = stats.tstat;
             pvals = p;
-            dCohen = (mean(dataArray(group==2,:,:),1) - mean(dataArray(group==1,:,:),1)) ./ std(dataArray(:,:,:),0,1);
+            % Cohen's d computation for independent samples
+            n1 = sum(group==1);
+            n2 = sum(group==2);
+            s1_squared = var(dataArray(group==1,:,:),0,1);
+            s2_squared = var(dataArray(group==2,:,:),0,1);
+            pooled_sd = sqrt(((n1-1)*s1_squared+(n2-1)*s2_squared)/(n1+n2-2));
+            dCohen = (mean(dataArray(group==2,:,:),1) - mean(dataArray(group==1,:,:),1)) ./ pooled_sd;
         
     
             % cluster identification
@@ -397,9 +421,15 @@ switch PE_parameters.test
             dCohen = zeros(groupNum, size(dataArray,2) );
             for groupIdx = 1:groupNum % separately per each group (group >= 1)
 
+                % t-test
                 [~,p,~,stats] = ttest( ...
                     dataArray(group==groupLbl(groupIdx),:,condition==2), ...
                     dataArray(group==groupLbl(groupIdx),:,condition==1) );
+
+                % Wilcoxon Signed-Rank Test
+%                 [p, ~, stats] = signrank( ...
+%                     dataArray(group==groupLbl(groupIdx),:,condition==2), ...
+%                     dataArray(group==groupLbl(groupIdx),:,condition==1) );
 
                 tvals(groupIdx,:) = stats.tstat;
                 pvals(groupIdx,:) = p;
