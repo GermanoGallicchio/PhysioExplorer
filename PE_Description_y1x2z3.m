@@ -1,5 +1,6 @@
 function clusterDescr = ...
     PE_Description_y1x2z3( ...
+    PE_parameters, ...
     DimStruct, ...
     clustIDList, ...
     clusterMatrix, ...
@@ -71,7 +72,7 @@ for msIdx = 1:clusterMeasure_num
     H0distribution = [clusterMetricsH0.(clusterMeasure_lbl{msIdx})]; 
     obsVal = clusterMeasure_obs.(clusterMeasure_lbl{msIdx}); % observed cluster's measure
     for clIdx = 1:nClust
-        pval(clIdx,msIdx) = sum(   abs(obsVal(clIdx))<abs(H0distribution)  ) / length(H0distribution);
+        pval(clIdx,msIdx) = sum(abs(H0distribution)>=abs(obsVal(clIdx))) / length(H0distribution);  
     end
 end
 %%
@@ -188,7 +189,13 @@ statExt = nan(1,nClust);
 for clIdx = 1:nClust
     idx = clusterMatrix==clustIDList(clIdx);
     statMdn(clIdx) = median(statMatrix(idx));
-    statExt(clIdx) = min(statMatrix(idx));  % likely BUG: min for negative, max for positive
+    if sign(clustIDList(clIdx)) < 0
+        statExt(clIdx) = min(statMatrix(idx));  % min for negative
+    else
+        statExt(clIdx) = max(statMatrix(idx));  % max for positive
+    end
+    
+    
 end
 
 
@@ -246,7 +253,7 @@ end
 clusterDescr = struct2table(clusterDescr);
 
 % sort by criterion
-sortBy = 'mass';  % TO DO: this is hard coded for now. give option to choose outside this script
+sortBy = PE_parameters.clusterMetricChoice;  % TO DO: this is hard coded for now. give option to choose outside this script % DONE: THIS COMMENT CAN BE DELETED
 if any(contains(clusterMeasure_lbl,sortBy))
     if nClust>0
         [~, sortIdx] = sort(abs(clusterDescr.([sortBy '_measure'])),'descend');
