@@ -114,13 +114,14 @@ if ~isnumeric(DimStruct.z3_D) || ~ismatrix(DimStruct.z3_D)
           'z3_D must be a numeric matrix.');
 end
 
-% check continuous flags
-if ~isscalar(DimStruct.y1_contFlag) || ~ismember(DimStruct.y1_contFlag, [0,1]) || ...
-   ~isscalar(DimStruct.x2_contFlag) || ~ismember(DimStruct.x2_contFlag, [0,1]) || ...
-   ~isscalar(DimStruct.z3_contFlag) || ~ismember(DimStruct.z3_contFlag, [0,1])
-    error('PE_Adjacency_y1x2z3:InvalidcontFlags', ...
-          'contFlag fields must be scalar values of 0 or 1.');
-end
+% DELETE
+% % check continuous flags
+% if ~isscalar(DimStruct.y1_contFlag) || ~ismember(DimStruct.y1_contFlag, [0,1]) || ...
+%    ~isscalar(DimStruct.x2_contFlag) || ~ismember(DimStruct.x2_contFlag, [0,1]) || ...
+%    ~isscalar(DimStruct.z3_contFlag) || ~ismember(DimStruct.z3_contFlag, [0,1])
+%     error('PE_Adjacency_y1x2z3:InvalidcontFlags', ...
+%           'contFlag fields must be scalar values of 0 or 1.');
+% end
 
 % check adjFig is logical
 if ~islogical(adjFig) && ~(isnumeric(adjFig) && ismember(adjFig, [0,1]))
