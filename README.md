@@ -17,4 +17,6 @@ At the heart of the code is a _cluster forming_ algorithm that applies adjacency
     
 ```
 
-**Cite as** ...DOI to arrive...
+
+## Cite as
+...DOI to arrive...
