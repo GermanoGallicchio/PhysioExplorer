@@ -20,8 +20,9 @@ At the heart of the code is a _cluster forming_ algorithm that combines adjacenc
 
 ## Wish list (future updates)
 - cluster-level statistics
+  - mediation
   - 4d space (time x 3d MNI space)
-  - cluster forming not based on statistical significance
+  - alternative cluster forming not based on statistical significance
 - multivariate analyses
 
 
