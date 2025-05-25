@@ -1,9 +1,13 @@
 function [clusterMatrix, clustIDList, clusterMetrics] = ...
-    PCE_Identification_y1x2z3( ...
+    PE_Identification_y1x2z3( ...
     statMatrix, ...
     pvalMatrix, ...
-    PCE_parameters, ...
+    PE_parameters, ...
     DimStruct)
+% Cluster forming algorithm(s). This function identifies clusters in a 3D
+% statistical matrix (y1, x2, z3) using methods (described below):
+% - threshold
+% - geometric
 
 % This function identifies clusters in three dimensions: y1, x2, z3.
 % The nature of the dimensions is described in the DimStruct structure.
@@ -14,65 +18,72 @@ function [clusterMatrix, clustIDList, clusterMetrics] = ...
 %
 % INPUT: 
 %
-% statMatrix:       matrix of statistical values (e.g., rho, tval) 
-%                   dimensions: 1=chan, 2=freq, 3=time
-% 
-% pvalMatrix        matrix of pvalues associated with statMatrix 
-%                   dimensions: 1=chan, 2=freq, 3=time
+%   statMatrix      - Matrix of statistical values (e.g., correlation coefficients, t-values).
+%                     Dimensions must correspond to the structure defined in DimStruct.
 %
-% neighborMatrix    matrix (chan x chan format)
-%                   1=neighbors, 0=no
+%   pvalMatrix      - Matrix of p-values associated with statMatrix, with matching dimensions.
 %
-% DimStruct         structure defining the dimensions. Following example #1 above
-%                     DimStruct.y1_lbl      = 'Freq';  % label for dimension y1
-%                     DimStruct.y1_contFlag = 1;       % the variable is on one continuous scale 1=yes, 0=no
-%                     DimStruct.y1_vec      = freqVec; % vector of values. needed only if contFlat==1
-%                     DimStruct.y1_units    = 'Hz';    % label for the units of dimension y1. needed only if contFlat==1
-%                     DimStruct.x2_lbl      = 'Time';   % label for dimension x2
-%                     DimStruct.x2_contFlag = 1;        % the variable is on one continuous scale 1=yes, 0=no
-%                     DimStruct.x2_vec      = timeVec;  % vector of values. needed only if contFlat==1
-%                     DimStruct.x2_units    = 's';      % label for the units of dimension x2. needed only if contFlat==1
-%                     DimStruct.z3_lbl      = 'Channel';
-%                     DimStruct.z3_contFlag = 0;
-%                     DimStruct.z3_chanlocs = EEG.chanlocs; % channel locations structure in the eeglab format
-%                     DimStruct.z3_neighborMatrix = neighborMatrix; created by ClusterAnalysis_ChannelNeighborhood.m
+%   PE_parameters  - Structure with parameters controlling the clustering process, including:
+%                       .adjMatrix       - Adjacency matrix defining neighborhood relationships
+%                       .ignoreMask      - Mask indicating points to exclude from clustering
+%                       .figFlag_cluster - Plot clusters (1 = yes, 0 = no)
+%                       .figFlag_proximity - Plot cluster proximity area (1 = yes, 0 = no)
+%                       .verbose         - Verbosity flag
+%                       .method          - Clustering method: 'threshold' or 'geometric'
+% fields specific to 'threshold' method
+%                       .threshold       - Critical p-value for significance (e.g., 0.05) 
+% fields specific to 'geometric' method
+%                       .sigma_y1, .sigma_x2 - Smoothing parameters for continuous dimensions
 %
-% p_crit            1 digit represeting critical p value (e.g., 0.05) for clustering purposes only
 %
-% pixelSign         1 or -1 to search, respectively, for clusters with positive or negative statitical values
-%
-% distThreshold     Euclidean distance inclusive threshold ( <= of this threshold) to determine extent of the cluster proximity area in the 2d grid
-%
-% figFlag_cluster   1=plot figures, 0=don't
-%
-% figFlag_proximity 1=plot figure, 0=don't 
-%
+%   DimStruct       - Structure describing each of the three dimensions, for example:
+%                       .y1_lbl, .x2_lbl, .z3_lbl         - Labels for each dimension
+%                       .y1_vec, .x2_vec                  - Coordinate vectors (if continuous)
+%                       .y1_units, .x2_units              - Units for each dimension
+%                       .z3_chanlocs                      - Channel locations structure (EEGLAB format)
+%                       .z3_neighborMatrix                - Channel adjacency matrix
+%                       .euclDistThreshold                - Euclidean distance threshold for proximity
 %
 % OUTPUT:
+%   clusterMatrix   - Matrix the same size as statMatrix, indicating cluster assignments (0 = not clustered).
+%   clustIDList     - List of unique cluster IDs found in clusterMatrix.
+%   clusterMetrics  - Struct containing metrics for each cluster:
+%                       .id      - Cluster IDs
+%                       .size    - Number of points in each cluster
+%                       .mass    - Sum of statMatrix values in each cluster
 %
-% clusterMatrix 
+% How it works: 
+% - treshold 
 %
-% clusterSize 
-% 
-% clusterMass 
-% 
-% clusterRobMass
+% With this method, the function groups together statistically significant
+% points in a three-dimensional space defined by y1, x2, and z3. Groups
+% together adjacent points where the p-value is below a specified
+% threshold. To determine statistically significance points, it uses p
+% values (critical p decided in PE_parameters's appropriate field).
 %
 % 
-% Lay-term exaplanation: 
-% Conceptually, imagine a 3d space made of "cubes" or "voxels". Two
-% significant voxels belong in the same cluster if they share a whole
-% "face". In other words, if they have the same coordinates for two
-% dimensions and the other dimension is contiguous or neighboring.
+% - geometric
 %
-% Acknowledgments: 
-% inspired by Groppe's find_clusters.m and its subfunction follow_clust.m
-% https://github.com/dmgroppe/Mass_Univariate_ERP_Toolbox 
+% ** work in progress **
+% WIth this method, the function uses geometric criteria, such as local
+% curvature, to form clusters.
+%
+% General functioning:
+%
+% Points are considered part of the same cluster if they are adjacent
+% according to the adjacency matrix (based on the a priori 3d structure)
+% and meet the criteria of the selected method (based on statistical
+% results).
+%
+%
+%
+% Acknowledgments: Inspired by Groppe's Mass_Univariate_ERP_Toolbox
+% specifically find_clusters.m and its subfunction follow_clust.m
+% https://github.com/dmgroppe/Mass_Univariate_ERP_Toolbox as of early 2025
 % 
-% written by Germano Gallicchio 
-% germano.gallicchio@gmail.com
+% Author: Germano Gallicchio (germano.gallicchio@gmail.com)
 
-%% sanity checks
+%% input validation / sanity checks
 
 % sanity checks for DimStruct structure
 % TO DO
@@ -110,9 +121,9 @@ cLim = [-1 1];
 
 % cluster identification method
 methodList = ["threshold" "geometric"];
-methodIdx = find(strcmp(methodList,PCE_parameters.method));
+methodIdx = find(strcmp(methodList,PE_parameters.method));
 if ~isempty(methodIdx)
-    if PCE_parameters.verbose
+    if PE_parameters.verbose
         disp(['using: ' methodList{methodIdx}])
     end
 else
@@ -148,7 +159,7 @@ statMatrix_orig = statMatrix;
 
 %% fig proximity
 
-if PCE_parameters.figFlag_proximity==1
+if PE_parameters.figFlag_proximity==1
     % continuity structure along the two continuous dimensions
     % compute the Euclidean distance of each point in a square matrix from its central point.
 
@@ -249,8 +260,8 @@ switch methodIdx
 
         %% gaussian smoothing
         % of 2d continuous dimensions
-        sigma_y1 = PCE_parameters.sigma_y1;
-        sigma_x2 = PCE_parameters.sigma_x2;
+        sigma_y1 = PE_parameters.sigma_y1;
+        sigma_x2 = PE_parameters.sigma_x2;
 
         % gaussian along x2
         if nx2 > 1
@@ -287,7 +298,7 @@ switch methodIdx
 
         % y1 dimension
         if ny1<=3
-            if PCE_parameters.verbose
+            if PE_parameters.verbose
                 warning(['skipping y1 dimension (n = ' num2str(ny1) '). the second derivative is not meaningful with fewer than 3 points. so i will not apply the second derivative on this dimension'])
             end
         else
@@ -300,7 +311,7 @@ switch methodIdx
 
         % x2 dimension
         if nx2<=3
-            if PCE_parameters.verbose
+            if PE_parameters.verbose
                 warning(['skipping x2 dimension (n = ' num2str(nx2) '). the second derivative is not meaningful with fewer than 3 points. so i will not apply the second derivative on this dimension'])
             end
         else
@@ -325,7 +336,7 @@ switch methodIdx
 
         % z3 dimension
         if nz3<=20
-            if PCE_parameters.verbose
+            if PE_parameters.verbose
                 warning(['skipping y1 dimension (n = ' num2str(ny1) '). the second derivative is not meaningful with fewer than 3 points. so i will not apply the second derivative on this dimension'])
             end
         else
@@ -409,11 +420,11 @@ end
 %% cluster forming
 % find cluster IDs
 
-adjMatrix = PCE_parameters.adjMatrix;
+adjMatrix = PE_parameters.adjMatrix;
 
 switch methodIdx
     case 1 % threshold
-        searchMatrix = (abs(pvalMatrix)<PCE_parameters.threshold) .* sign(statMatrix);
+        searchMatrix = (abs(pvalMatrix)<PE_parameters.threshold) .* sign(statMatrix);
     case 2 % geometric
         searchMatrix = abs(statMatrix_orig) .* curvature ;
 end
@@ -424,7 +435,7 @@ queueMatrix = false(size(statMatrix)); % initialize queue matrix
 clustID = 0; % initialize / clusters id when multiplied by sign and cluster numerosity at the end of the script
 
 % apply ignore mask
-searchMatrix = searchMatrix .* PCE_parameters.ignoreMask;
+searchMatrix = searchMatrix .* PE_parameters.ignoreMask;
 
 for pnt_idx = find(searchMatrix)    % loop through the searchMatrix points
 
@@ -471,8 +482,9 @@ for pnt_idx = find(searchMatrix)    % loop through the searchMatrix points
         % ...not already asked to join this cluster 
         % because of the bulk search, some points are asked multiple times to joint the same cluster
         % TO DO :
-        % - create a askedMatrix logic similar to queue, which is reset at the beginning of a new cluster 
+        % - create a askedMatrix logic similar to queue, which is reset at the beginning of a new cluster id
         % - do something similar to this: 
+        % / BOTH DONE NOW
         criteria = criteria & ~askedMatrix;
 
 
@@ -497,7 +509,6 @@ for pnt_idx = find(searchMatrix)    % loop through the searchMatrix points
         if sum(queueMatrix)==0
             recruiting = false;
         end
-        %end
     end
     
 end
@@ -593,7 +604,7 @@ nClust = length(clustIDList);
 % active dimensions [0 1 1]
 % one 2d plot, % to do: include cluster metric with the contour line
 
-if PCE_parameters.figFlag_cluster==1
+if PE_parameters.figFlag_cluster==1
     
     % one 2d plot
     if ny1>1  &  nx2>1
