@@ -1,44 +1,36 @@
 function [clusterMatrix_corrected, clusterMetrics_corrected] = ...
-    PCE_Pruning_y1x2z3(clusterMatrix, clusterMetrics, clustThresholdH0, clustIDList, PCE_parameters)
-
-% ClusterAnalysis_Correction_y1x2z3 removes clusters in the 3 dimensions
-% based on the H0 derived threshold computed by the previous function
+    PE_Pruning_y1x2z3(clusterMatrix, clusterMetrics, clustThresholdH0, clustIDList, PE_parameters)
+% PCE_Pruning_y1x2z3 removes clusters based on a threshold derived under
+% the null hypothesis (H0). It removes clusters in 3D data that do not meet
+% the significance threshold derived from the null hypothesis (H0) testing
+% computed by the previous function. Under threshold clusters are set to
+% zero in the matrix and NaN in the metrics).
 %
-% INPUT: 
+% Syntax:
+%   [clusterMatrix_corrected, clusterMetrics_corrected] = ...
+%       PE_Pruning_y1x2z3(clusterMatrix, clusterMetrics, clustThresholdH0, clustIDList, PCE_parameters)
 %
-% clusterMatrix     Matrix (chan x time format) 
-%                   Computed by the previous function
-%                   It describes cluster membership of each pixel
-%                   0=no cluster, 1=cluster "1", 2=cluster "2", etc.
-%
-% clusterMeasure    vector (1 x nClust)
-%                   Computed by the previous function
-%                   It describes, for each cluster identified, its mass
-%
-% clusterThreshold  A number (1 x 1)
-%                   Computed by no earlier function, so that
-%                   it is used to remove clusters in clusterMatrix that are 
-%                   below-threshold
-%
+% --- FROM HERE ---
+% INPUT:
+%   clusterMatrix         Matrix (e.g., channels x time x frequency) indicating cluster membership 
+%                        for each data point. 0 = no cluster, 1 = cluster "1", 2=cluster "2", etc.
+%   clusterMetrics        Structure containing metrics for each cluster (e.g., mass, size, etc.).
+%                        Each field should be a vector with one value per cluster.
+%   clustThresholdH0      Structure with thresholds derived under H0 for each metric, e.g.,
+%                        clustThresholdH0.mass_oneTail for one-tailed thresholding.
+%   clustIDList           Vector containing the IDs of clusters to consider, corresponding to 
+%                        clusterMetrics.
+%   PCE_parameters        Structure with parameters controlling the pruning, including:
+%                        - clusterMetricChoice: string specifying which metric to use for pruning.
 %
 % OUTPUT:
-% clusterMatrix_corrected   Same as before but with some pixels zeroed
-%                           (those within a below-threshold cluster)       
-%
-% clusterMass_corrected     Same as before but with some cluster(s) NaNed
-%                           (those clusters below the threshold)
+%   clusterMatrix_corrected  Corrected cluster matrix with clusters below threshold removed (zeroed).
+%   clusterMetrics_corrected Corrected cluster metrics structure with below-threshold removed (set to NaN).
 % 
 % 
-% written by Germano Gallicchio 
-% germano.gallicchio@gmail.com
+% Author: Germano Gallicchio (germano.gallicchio@gmail.com)
 
-%% debugging cell
-
-%clusterMatrix
-%clusterMass
-% clusterThreshold = clustMassThreshold1;
-
-%% sanity checks
+%% input validation
 
 % same number of clusters in clusterMatrix and clusterMeasure
 if length(nonzeros(unique(clusterMatrix(:))))~=length(clusterMetrics.id)
