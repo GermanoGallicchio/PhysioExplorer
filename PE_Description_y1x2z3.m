@@ -13,31 +13,37 @@ function clusterDescr = ...
 %
 % INPUT: 
 %
-% DimStruct         y1=Freq, x2=Time, z=Chan
-%                   For example...
-%                     DimStruct.y1_lbl   = 'Freq';
-%                     DimStruct.y1_units = 'Hz';
-%                     DimStruct.y1_vec   = CWT_f;
-%                     DimStruct.x2_lbl   = 'Time';
-%                     DimStruct.x2_units = 's';
-%                     DimStruct.x2_vec   = activity_time;
-%                     DimStruct.z3_lbl   = 'Channel';
-%                     DimStruct.z3_contFlag = 0;
-%                     DimStruct.z3_chanlocs =; chanlocs structure in the eeglab format
+%   DimStruct   Structure describing the dimensions of the data,
+%               with fields as in previous scripts
+%
+%   PE_parameters        Structure containing analysis parameters, including:
+%       .clusterMetricChoice (string) Name of cluster metric to use for sorting
+%
+%   clustIDList          Vector of cluster IDs to describe (numeric)
+%   clusterMatrix        3D matrix labeling each (y1,x2,z3) point with cluster ID (same size as data)
+%   clusterMeasure_obs   Struct with observed values for each cluster-level measure (fields: e.g., 'size', 'mass')
+%   clustThreshold       Struct with threshold values for each cluster-level measure (fields: e.g., 'size_oneTail')
+%   clusterMetricsH0     Struct with null distributions for each cluster-level measure (fields: arrays of H0 values)
+%   statMatrix           3D matrix of statistical values (e.g., t-values, correlation coefficients) (same size as data)
 %
 % OUTPUT:
 %
+%   clusterDescr         Table summarizing descriptive statistics for each cluster.
+%                       Each row represents one cluster and contains:
+%                        - Cluster ID and cluster-level measure values
+%                        - p-values and thresholds for each measure
+%                        - Range and quantiles for continuous dimensions y1 and x2
+%                        - Number and names of involved channels in dimension z3
+%                        - Median and extreme values of effect size/statistics within the cluster
+%                        - Localization info for extreme points and weighted medoids
+%                        - All fields are labeled using the provided DimStruct labels/units
+%
+%
 % 
-% Author: Germano Gallicchio 
-% germano.gallicchio@gmail.com
+% Author:   Germano Gallicchio (germano.gallicchio@gmail.com)
+%
 
-%% debugging cell
-
-% clustMaxMass_H0 = clustMaxMass1_H0;
-
-%keyboard
-
-%% sanity checks
+%% input validaiton / sanity checks
 
 % size of statMatrix and eSizMatrix must be the same 
 % if ~isequal(size(statMatrix), size(eSizMatrix))
@@ -47,6 +53,7 @@ function clusterDescr = ...
 %%
 % TO DO: add to PE_description to only use statMatrix, whatever it is
 % TO DO: tidy up this function a bit
+%   - prctiles for y1 and x2 can be computed in the same loop
 
 %% get data
 
