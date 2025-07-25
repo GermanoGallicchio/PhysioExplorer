@@ -1,5 +1,5 @@
 
-**PhysioExplorer** is a set of functions to extract patterns from multivariate data. Multivariate data refer to any dataset with multiple variables (e.g., many EEG time-frequency points). When the number of variables is much larger than the number of observations and when the variables are highly correlated, the data are sometimes called "megavariate" (see Eriksson et al., 2013). PhysioExplorer can perform any combination of _analysis_ and _objective_ described below. 
+**PhysioExplorer** is a set of functions to extract patterns from multivariate data. Multivariate data refer to any dataset with multiple variables (e.g., many EEG time-frequency points). When the number of variables is much larger than the number of observations and when the variables are highly correlated, the data are sometimes called "megavariate" (see Eriksson et al., 2013). PhysioExplorer can perform any combination of _analysis_ and _objective_ described below in both multivariate and megavariate contexts. 
 
 ## pe_cfg.analysis (Analysis)
 ### 'cluster'
