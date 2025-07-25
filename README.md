@@ -15,10 +15,8 @@
 
 ## pe_cfg.objective (Objective)
 ### 'permutation'
-
-**Permutation** is for null-hypothesis testing. In each Monte-Carlo iteration, group/condition labels are shuffled with participants sampled with replacement (bootstrap) or not (permutation), and the statistics are recomputed. The code compares the observed cluster metrics (e.g., cluster mass, singular value) with the null-hypothesis distribution to evaluate their statistical significance. (Note: for cluster analysis, inference is done at the cluster level and not at the point level.)
-### 'bootstrap'.
-
+**Permutation** is for null-hypothesis testing. In each Monte-Carlo iteration, group/condition labels are shuffled, and the statistics are recomputed. The code compares the observed cluster metrics (e.g., cluster mass, singular value) with the distribution of the same metrics under the null hypothesis to evaluate their statistical significance. (Note: for cluster analysis, inference is done at the cluster level and not at the point level.)
+### 'bootstrap'
 **Bootstrap** is for stability estimation.
 
 ```mermaid
@@ -46,10 +44,10 @@
 
 
 ### Wish list (future updates)
-- mediation
-- 4d space (time x 3d MNI space)
-- alternative cluster forming not based on statistical significance
 - write tutorials on how to use PhysioExplorer
+- mediation
+- alternative cluster forming not based on statistical significance
+
 
 
 
