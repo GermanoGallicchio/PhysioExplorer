@@ -1,44 +1,66 @@
 
-**PhysioExplorer** is a set of functions for _identifying_, _describing_, and _pruning_ the results of cluster-based analysis.
-Clusters can be defined in a 3-dimensional space (e.g, spatial-temporal-spectral) or a lower-dimensional space (e.g., spatial-temporal, temporal-spectral).  
-High-level description
+**PhysioExplorer** is a set of functions to extract patterns from multivariate and megavariate data. Both multivariate and megavariate analyses aim to identify patterns among many variables. In multivariate analysis, the number of variables is smaller than the number of observations, and the variables are not correlated. In megavariate analysis, the number of variables is larger (often much larger) than the number of observations, and the variables are highly correlated (there is collinearity). See Eriksson et al. (2013) for more information. PhysioExplorer can perform any combination of _analysis_ and _objective_ described below. 
 
-## pe_cfg.analysis
+## pe_cfg.analysis (Analysis)
 ### 'cluster'
-Cluster-level statistics
-At the heart of the code is a _cluster forming_ algorithm that combines adjacency criteria (e.g., spatial-temporal-spectral) with the results of univariate statistical testing (e.g., p-values). The code forms clusters on the observed data and also on many sets of surrogate data artificially created under the _null hypothesis_ of exchangeability of group/condition labels. The surrogate data are sampled through the Monte-Carlo approach. In each Monte-Carlo iteration, group/condition labels are shuffled with participants sampled with replacement (bootstrap) or not (permutation), and the statistics are recomputed. The code compares the observed cluster metrics (cluster size or mass) with the null-hypothesis distribution to evaluate their statistical significance. Inference is therefore done at the cluster level and not at the point level. If the distribution only includes the most extreme cluster per Monte-Carlo iteration, this statistical procedure controls for Family-Wise Error Rate (FWER).
+**Cluster-level analysis** (Groppe et al., 2011; Maris & Oostenveld, 2007) is a two-step procedure: a large amount of univariate analyses followed by cluster forming in the multivariate space. Clusters can be defined in a 3-dimensional space (e.g, time-frequency-channel, frequency-frequency-channel) or a lower-dimensional subset (e.g., time-channel, time-frequency, frequency-channel, time). At the heart of the code is a_cluster forming algorithm that combines adjacency criteria (e.g., spatial-temporal-spectral) with the results of univariate statistical testing (e.g., p-values). The code forms clusters on the observed data and, depending on the _objective_ many sets of surrogate data artificially created under the null hypothesis of exchangeability of group/condition labels (permutataion) or many replicates, each with sampling variability, of the original data (bootstrap). The surrogate data are sampled through the Monte-Carlo approach. 
 
-Usage
+### 'svd_scm'
+**SVD-based Symmetric Covariance Mapping** handles megavariate and multivariate data structures to find associations between two sets of variables. SVD stands for singular value decomposition. (Note: I think the term SVD-SCM is more representative of the underlying maths but does not give justice to its history. More historically-accurate and better-known terms are PLS-C (i.e., Partial Least Squares - Correlation; _REFERENCE_)
+
+
+
+
+
+
+## pe_cfg.objective (Objective)
+### 'permutation'
+
+**Permutation** is for null-hypothesis testing. In each Monte-Carlo iteration, group/condition labels are shuffled with participants sampled with replacement (bootstrap) or not (permutation), and the statistics are recomputed. The code compares the observed cluster metrics (e.g., cluster mass, singular value) with the null-hypothesis distribution to evaluate their statistical significance. (Note: for cluster analysis, inference is done at the cluster level and not at the point level.)
+### 'bootstrap'.
+
+**Bootstrap** is for stability estimation.
+
 ```mermaid
-  graph TD;
-    D(H0 cluster identification)
-    A(cluster identification)
-    B(cluster description)
-    C(cluster pruning)
-    A-->B-->C;
-    D---->C
-    
+  graph LR;
+    A(pe_cfg.analysis)
+    B(cluster)
+    C(svd_scm)
+    D(pe_cfg.objective)
+    E(permutationH0testing)
+    F(bootstrapStability)
+
+    A-->B;
+    A-->C;
+    D-->E;
+    D-->F;
+
 ```
-### 'PLS' 
-
-Partial Least Squares (PLS)
-
-to be included soon
 
 
-### 'RSA_cluster' and 'RSA_PLS'
 
-Representational Similarity Analysis (RSA)
 
-to be included soonish
+
+
+
+
 
 ### Wish list (future updates)
-- cluster-level statistics
-  - mediation
-  - 4d space (time x 3d MNI space)
-  - alternative cluster forming not based on statistical significance
+- mediation
+- 4d space (time x 3d MNI space)
+- alternative cluster forming not based on statistical significance
+- write tutorials on how to use PhysioExplorer
 
 
 
 ## Cite as
 ...DOI to arrive...
+https://github.com/GermanoGallicchio/PhysioExplorer
+
+
+# References
+Eriksson, L., Byrne, T., Johansson, E., Trygg, J., & Vikström, C. (2013). Multi-and megavariate data analysis basic principles and applications. Umetrics Academy.
+
+Groppe, D. M., Urbach, T. P., & Kutas, M. (2011). Mass univariate analysis of event‐related brain potentials/fields I: A critical tutorial review. Psychophysiology, 48(12), 1711-1725.
+
+Maris, E., & Oostenveld, R. (2007). Nonparametric statistical testing of EEG-and MEG-data. Journal of neuroscience methods, 164(1), 177-190.
