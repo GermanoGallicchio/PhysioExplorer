@@ -1,17 +1,12 @@
 
-**PhysioExplorer** is a set of functions to extract patterns from multivariate data. Multivariate data refer to any dataset with multiple variables (e.g., many EEG time-frequency points). When the number of variables is much larger than the number of observations and when the variables are highly correlated, the data present unique challenges and are sometimes called "megavariate" (see Eriksson et al., 2013). PhysioExplorer can perform any combination of _analysis_ and _objective_ described below in both multivariate and megavariate contexts. 
+**PhysioExplorer** is a set of functions to extract patterns from multivariate physiological data. When the number of variables is much larger than the number of observations and when the variables are highly correlated, the data present unique challenges and are sometimes called "megavariate" (see Eriksson et al., 2013). PhysioExplorer can perform any combination of _analysis_ and _objective_ described below in both multivariate and megavariate contexts (with no distinction). One solution to the high collinearity is to run mass (i.e., a lot of) univariate tests and then cluster their results where there is contiguity in some physical dimension (e.g., time, frequency, sensor space). Another solution is to find the combination of the whole set of features that best describes behavioral data or experimental design group/condition.
 
 ## pe_cfg.analysis (Analysis)
 ### 'cluster'
 **Cluster-level analysis** (Groppe et al., 2011; Maris & Oostenveld, 2007) is a two-step procedure: (1) compute univariate test statistics at each location and threshold them, (2) form spatial/temporal/spectral clusters of suprathreshold points. Clusters can be defined in a 3-dimensional space (e.g, time-frequency-channel, frequency-frequency-channel) or a lower-dimensional subset (e.g., time-channel, time-frequency, frequency-channel, time). At the heart of the code is a_cluster forming algorithm that combines adjacency criteria (e.g., spatial-temporal-spectral) with the results of univariate statistical testing (e.g., p-values). The code forms clusters on the observed data and, depending on the _objective_ many sets of surrogate data artificially created under the null hypothesis of exchangeability of group/condition labels (permutataion) or many replicates, each with sampling variability, of the original data (bootstrap). The surrogate data are sampled through the Monte-Carlo approach. 
 
-### 'svd_scm'
-**SVD-based Symmetric Covariance Mapping** handles multi/megavariate data structures natively (in one step) to find associations between two sets of variables. SVD stands for singular value decomposition. (Note: I think the term SVD-SCM is more representative of the underlying maths and therefore field-agnostic, but (a) nobody apart from me uses it, (b) it does not give justice to its history, and (c) the same mathematical solution can be reached without SVD but more painfully through iterative least squares approximations. More historically-aware and better-known, although field-specific, terms are PLS-C (i.e., Partial Least Squares - Correlation; _REFERENCE_)
-
-
-
-
-
+### 'pls_svd'
+**SVD-based Partial Least Squares** is a form of symmetric covariance mapping (Note: SVD stands for singular value decomposition.) It handles multi/megavariate data structures natively (in one step) to find combinations of features that best describe the linear associations between two sets of variables. The number of combinations found depends on how much linear independence is in the combined data (the rank). Each combination is characterized by the singular value, informing on how much this combination explains of the covariance, and two singular vectors (one for each variable set), telling how the original variables should be weighted to form that specific combination. Resampling statistics are then used to evaluate whether a certain mapping has a magnitude larger than noise (permutation testing on the singular value based metrics) or whether a certain combination's weights are stable under sampling variability (bootstrap evaluation on the weights).
 
 ## pe_cfg.objective (Objective)
 ### 'permutation'
@@ -43,10 +38,12 @@
 
 
 
-### Wish list (future updates)
-- write tutorials on how to use PhysioExplorer
-- mediation
+### Wish list (maybe future updates)
+The wish list is driven by a combination of (1) my research needs, (2) my interests, and (3) helping my future self run certain analyses
+- JIVE
 - alternative cluster forming not based on statistical significance
+- write tutorials on how to use PhysioExplorer
+
 
 
 
