@@ -48,6 +48,7 @@ The wish list is mainly driven by a combination of (1) my needs, (2) my interest
 - JIVE
 - visualize results: pe_view
 - alternative cluster forming not based on statistical significance
+- cluster descriptives: effect size for group/condition comparison 
 - write tutorials on how to use PhysioExplorer
 
 
