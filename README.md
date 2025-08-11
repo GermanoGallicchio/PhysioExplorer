@@ -1,5 +1,5 @@
 
-**PhysioExplorer** is a set of functions to extract patterns from multivariate physiological data. When the number of variables is much larger than the number of observations and when the variables are highly correlated, the data present unique challenges and are sometimes called "megavariate" (see Eriksson et al., 2013). PhysioExplorer can perform any combination of _analysis_ and _objective_ described below in both multivariate and megavariate contexts (with no distinction). One solution to the high collinearity is to run mass (i.e., a lot of) univariate tests and then cluster their results where there is contiguity in some physical dimension (e.g., time, frequency, sensor space). Another solution is to find the combination of the whole set of features that best describes behavioral data or experimental design group/condition.
+**PhysioExplorer (PE)** is a set of functions to extract patterns from multivariate physiological data. When the number of variables is much larger than the number of observations and when the variables are highly correlated, the data present unique challenges and are sometimes called "megavariate" (see Eriksson et al., 2013). PhysioExplorer can perform any combination of _analysis_ and _objective_ described below in both multivariate and megavariate contexts (with no distinction). One solution to the high collinearity is to run mass (i.e., a lot of) univariate tests and then cluster their results where there is contiguity in some physical dimension (e.g., time, frequency, sensor space). Another solution is to find the combination of the whole set of features that best describes behavioral data or experimental design group/condition.
 
 ## pe_cfg.analysis (Analysis)
 ### 'empiricalL1_FDR'
@@ -39,7 +39,19 @@
 
 
 
-
+### What PE's current version can do
+[X] = PE can do it
+<br>
+[ ] = PE cannot yet do it
+<br>
+| analysis &<br>objective | symmetric association between variables | compare groups | compare levels of one repeated-measure factor
+| --- | :---: | :---: | :---: | 
+| empiricalL1_FDR<br>permutation             | [ ]<br>(2 variables)     | [X]<br>(2 groups)   | [X]<br>(2 levels) |
+| empiricalL1_FDR<br>bootstrap               | [ ]<br>(2 variables)     | [X]<br>(2 groups)   | [X]<br>(2 levels) |
+| theoreticalL1_clusterMaxT<br>permutation   | [ ]<br>(2 variables)     | [X]<br>(2 groups)   | [X]<br>(2 levels) |
+| theoreticalL1_clusterMaxT<br>bootstrap     | [ ]<br>(2 variables)     | [ ]<br>(2 groups)   | [ ]<br>(2 levels) |
+| PLS_SVD<br>permutation                     | [ ]<br>(2 variable sets) | [ ]<br>(2+ groups)  | [ ]<br>(2+ levels) |
+| PLS_SVD<br>bootstrap                       | [ ]<br>(2 variable sets) | [ ]<br>(2+ groups)  | [ ]<br>(2+ levels) |
 
 
 
