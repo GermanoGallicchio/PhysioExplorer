@@ -70,7 +70,8 @@ The wish list is mainly driven by a combination of (1) my needs, (2) my interest
 
 
 ## Cite as
-...DOI to arrive...
+[<img width="191" height="20" alt="image" src="https://github.com/user-attachments/assets/5196b517-bfa9-4785-864c-6831b56c9738" />](https://zenodo.org/badge/906364286.svg)
+<br>
 https://github.com/GermanoGallicchio/PhysioExplorer
 
 
