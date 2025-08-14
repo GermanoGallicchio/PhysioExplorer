@@ -57,11 +57,9 @@
 
 ### Wish list (maybe future updates)
 The wish list is mainly driven by a combination of (1) my needs, (2) my interests, and (3) helping my future self replicate analyses
-- own version of topoplot to reduce dependency on eeglab
-- JIVE
-- visualize results: pe_view
-- alternative cluster forming not based on statistical significance
 - cluster descriptives: effect size for group/condition comparison 
+- visualize results: pe_view
+- own version of topoplot to reduce dependency on eeglab
 - write tutorials on how to use PhysioExplorer
 
 
