@@ -1,6 +1,8 @@
 
 **PhysioExplorer (PE)** is a set of functions to extract patterns from multivariate physiological data. When the number of variables is much larger than the number of observations and when the variables are highly correlated, the data present unique challenges and are sometimes called "megavariate" (see Eriksson et al., 2013). PhysioExplorer can perform any combination of _analysis_ and _objective_ described below in both multivariate and megavariate contexts (with no distinction). One solution to the high collinearity is to run mass (i.e., a lot of) univariate tests and then cluster their results where there is contiguity in some physical dimension (e.g., time, frequency, sensor space). Another solution is to find the combination of the whole set of features that best describes behavioral data or experimental design group/condition.
 
+Code developed on MATLAB R2022b on a Windows 10 device.
+
 ## pe_cfg.analysis (Analysis)
 ### 'empiricalL1_FDR'
 ...upcoming...
