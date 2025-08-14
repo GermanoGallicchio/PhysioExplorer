@@ -49,7 +49,7 @@ Code developed on MATLAB R2022b on a Windows 10 device.
 | analysis &<br>objective | symmetric association between variables | compare groups | compare levels of one repeated-measure factor
 | ---: | :---: | :---: | :---: | 
 | empiricalL1_FDR<br>permutation             | [X]<br>(2 variables)     | [X]<br>(2 groups)   | [X]<br>(2 levels) |
-| empiricalL1_FDR<br>bootstrap               | [ ]<br>(2 variables)     | [X]<br>(2 groups)   | [X]<br>(2 levels) |
+| empiricalL1_FDR<br>bootstrap               | [X]<br>(2 variables)     | [X]<br>(2 groups)   | [X]<br>(2 levels) |
 | theoreticalL1_clusterMaxT<br>permutation   | [X]<br>(2 variables)     | [X]<br>(2 groups)   | [X]<br>(2 levels) |
 | theoreticalL1_clusterMaxT<br>bootstrap     | [ ]<br>(2 variables)     | [ ]<br>(2 groups)   | [ ]<br>(2 levels) |
 | PLS_SVD<br>permutation                     | [ ]<br>(2 variable sets) | [ ]<br>(2+ groups)  | [ ]<br>(2+ levels) |
