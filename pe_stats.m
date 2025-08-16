@@ -115,7 +115,7 @@ end
 % designOptions = pe_designOptions;  % can delete this row
 designCode = pe_parseDesign(pe_cfg,L);
 pe_cfg.designCode = designCode;
-
+results.designCode = designCode;
 
 %% perform the analysis
 
