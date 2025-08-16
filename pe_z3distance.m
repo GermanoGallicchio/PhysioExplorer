@@ -28,8 +28,6 @@ function z3_distanceMatrix = pe_z3distance(pe_cfg, eeglabPath)
 %   Author: Germano Gallicchio (germano.gallicchio@gmail.com)
 
 
-% TO DO: in future, remove dependency from eeglab's topoplot by creating my own topoplot function
-
 %% shortcuts
 
 chanlocs = pe_cfg.dimensions.z3_chanLocs;
@@ -101,19 +99,6 @@ if pe_cfg.figFlag==1
     % plot channel neighbors
     if pe_cfg.figFlag
 
-        % check EEGLAB path
-        if ~exist('topoplot', 'file')
-            if isempty(eeglabPath)
-                error('EEGLAB''s topoplot function not found. Valid eeglabPath must be provided.');
-            end
-            addpath(eeglabPath);
-            if ~exist('topoplot', 'file')
-                error('PE_ChannelNeighborhood:EEGLABNotFound', ...
-                    'topoplot function not found in the provided EEGLAB path.');
-            end
-        end
-
-
         % choose random channel idx
         topoPlotFig_chanIdx = sort(randperm(nChans,8));
         topoPlotFig_chanLbl = string({chanlocs(topoPlotFig_chanIdx).labels});
@@ -141,29 +126,33 @@ if pe_cfg.figFlag==1
         tldB.Padding = 'tight';
         tldB.TileSpacing = 'tight';
 
-        % topoplot-specific parameters
-        radius = 0.70; % for plotting reasons only (radius is not in the computations)
-        xyLim = [-0.455 0.455];  % to make the circles appear bigger
-
+        % draw z3 plot
         plotCounter = 0;
         for cIdx = 1:length(chanLbl)
             plotCounter = plotCounter + 1;
 
             nexttile(tldB)
-            surrogateData = randn(1,nChans);
-            % all chans
-            topoplot(surrogateData, chanlocs, 'electrodes', 'on', 'style', 'blank', 'plotrad',radius, 'headrad', 0.5, 'emarker', {'o', 0.6*[1 1 1],3,1}); hold on;  % plot all channels
-            set(gca,'XLim',xyLim, 'YLim',xyLim)
-            % seed chan
-            chan2plot = chanIdx(cIdx);
-            topoplot(surrogateData(chan2plot ), chanlocs(chan2plot),  'electrodes', 'on', 'style', 'blank', 'plotrad',radius, 'headrad', 0, 'emarker', {'.',[0    0.4470    0.7410], 15,5}); hold on; % plot seed channel
-            set(gca,'XLim',xyLim, 'YLim',xyLim)
-            % neighbor chans
-            chan2plot = neighborMatrix(chanIdx(cIdx),:);
-            if sum(chan2plot)>=1
-                topoplot(surrogateData(chan2plot ), chanlocs(chan2plot),  'electrodes', 'on', 'style', 'blank', 'plotrad',radius, 'headrad', 0, 'emarker', {'.',[0.8500    0.3250    0.0980], 15,5}); hold on; % plot neighbors of seed channels
-                set(gca,'XLim',xyLim, 'YLim',xyLim)
-            end
+
+            % 3d coordinates
+            coord_3d = chanlocs; % needs sph_theta and sph_phi
+            % z3Values per coordinate
+            z3Values = zeros(1,nChans); % initialize to zero (uninvolved channels will stay zero)
+            z3Values(chanIdx(cIdx)) = 1; % set seed channel to 1
+            z3Values(neighborMatrix(chanIdx(cIdx),:)) = 2; % set neighbor channels to 2
+            % plot parameters
+            params.projectionType = 'azimuthalEquidistant';   % azimuthalEquidistant | azimuthalConformal | orthographic
+            params.drawLines = true;
+            params.lineWidth = 1;
+            params.lineCol = [0 0 0 1];
+            params.chanMarkerSize = 5;
+            params.chanMarkerChar = 'o';
+            params.chanLbl = false; % true | false
+            params.colBar = false; % true | false
+            params.colMap = [1 1 1; lines(2)];
+
+            pe_z3Plot(coord_3d,z3Values,params)
+
+            
             %ttl = title({['seed channel: ' chanLbl{cIdx}] [num2str(sum(chan2plot)) ' neighbors' ]});
             ttl = title(['seed: ' chanLbl{cIdx}]);
             ttl.FontWeight = 'normal';
