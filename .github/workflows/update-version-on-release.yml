@@ -1,0 +1,31 @@
+name: Update VERSION.txt on new release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-version-file:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get release version
+        run: |
+          echo "Version: ${{ github.event.release.tag_name }}" > VERSION.txt
+          echo "Release Date: ${{ github.event.release.published_at }}" >> VERSION.txt
+          echo "Commit: $(git rev-parse HEAD)" >> VERSION.txt
+          echo "Author: ${{ github.event.release.author.login }}" >> VERSION.txt
+          echo "Repository: https://github.com/${{ github.repository }}" 
+
+      - name: Commit and push VERSION.txt
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Action"
+          git add VERSION.txt
+          git commit -m "Update VERSION.txt for ${{ github.event.release.tag_name }}"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
