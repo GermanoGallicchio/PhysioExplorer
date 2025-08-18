@@ -124,7 +124,6 @@ rowIdx = pe_resample(pe_cfg);
 
 switch [pe_cfg.analysis ' & ' num2str(pe_cfg.designCode)]
     case 'empiricalL1_FDR & 1  0  0' % -- correlation --
-        warning(['working on it: ' pe_cfg.objective ' ' num2str(pe_cfg.designCode)])
 
         % choose analysis subtype
         list = ["Pearson" "Spearman" "Kendall" "cylindrical"];
