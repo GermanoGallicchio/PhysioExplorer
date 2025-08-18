@@ -8,79 +8,6 @@ function pe_view(pe_cfg, results, L, R, viewParams)
 %
 % Author:
 
-%% default parameters (if not entered)
-
-fieldNames = fieldnames(viewParams);
-
-if ~any(strcmp(fieldNames,'xLabel'))
-    warning('viewParams.xLabel not entered, so I will guess')
-    viewParams.xLabel = [pe_cfg.dimensions.x2_lbl ' ' '[' pe_cfg.dimensions.x2_units ']'];
-end
-
-if ~any(strcmp(fieldNames,'yLabel'))
-    warning('viewParams.yLabel not entered, so I will guess')
-    viewParams.yLabel = [pe_cfg.dimensions.y1_lbl ' ' '[' pe_cfg.dimensions.y1_units ']'];
-end
-
-if ~any(strcmp(fieldNames,'xAxis4z3Lbl'))
-    warning('viewParams.xAxis4z3Lbl not entered, so I will guess')
-    viewParams.xAxis4z3Lbl = ["P7" "P8"];
-end
-
-if ~any(strcmp(fieldNames,'yAxis4z3Lbl'))
-    warning('viewParams.yAxis4z3Lbl not entered, so I will guess')
-    viewParams.yAxis4z3Lbl = ["P7" "F7"];
-end
-
-if ~any(strcmp(fieldNames,'title4z3Lbl'))
-    warning('viewParams.title4z3Lbl not entered, so I will guess')
-    viewParams.title4z3Lbl = string({pe_cfg.dimensions.z3_chanLocs.labels});
-end
-
-
-if ~any(strcmp(fieldNames,'lineColorPalette'))
-    warning('viewParams.lineColorPalette not entered, so I will guess')
-    tmpLines = lines(5);
-    viewParams.lineColorPalette = tmpLines([4 5],:); % lines/waveforms
-end
-
-if ~any(strcmp(fieldNames,'areaColorPalette'))
-    warning('viewParams.areaColorPalette not entered, so I will guess')
-    tmpLines = lines(5);
-    viewParams.areaColorPalette = tmpLines([2 1],:); % highlight area
-end
-
-
-if ~any(strcmp(fieldNames,'xyLength'))
-    warning('viewParams.xyLength not entered, so I will guess')
-    viewParams.xyLength  = [0.10  0.10];
-end
-
-if ~any(strcmp(fieldNames,'xyPadding'))
-    warning('viewParams.xyPadding not entered, so I will guess')
-    viewParams.xyPadding = [0.00  0.00];
-end
-
-if ~any(strcmp(fieldNames,'projectionType'))
-    warning('viewParams.projectionType not entered, so I will guess')
-    viewParams.projectionType = 'azimuthalEquidistant';
-end
-
-if ~any(strcmp(fieldNames,'projectionWarping'))
-    warning('viewParams.projectionWarping not entered, so I will guess')
-    viewParams.projectionWarping = [1 1];
-end
-
-if ~any(strcmp(fieldNames,'hLim'))
-    error('include viewParams.hLim')
-end
-if ~any(strcmp(fieldNames,'hStep'))
-    error('include viewParams.hStep')
-end
-if ~any(strcmp(fieldNames,'vLim'))
-    error('include viewParams.vLim')
-end
-
 %% shortcuts
 
 ny1 = pe_cfg.dimensions.y1_num;
@@ -88,32 +15,127 @@ nx2 = pe_cfg.dimensions.x2_num;
 nz3 = pe_cfg.dimensions.z3_num;
 ny1x2 = [ny1 nx2];
 
+chanlocs = pe_cfg.dimensions.z3_chanLocs;
+
+%% default parameters (if not entered)
+
+fieldNames = fieldnames(viewParams);
+
+% keep track of what is implicitly used by default and print it is pe_cfg.verbose = true
+enteredByDefault = repmat("",0,0); % initialize
+
+% line color palette
+if ~any(strcmp(fieldNames,'lineColorPalette'))
+    enteredByDefault = [enteredByDefault "lineColorPalette"];
+    tmpLines = lines(5);
+    viewParams.lineColorPalette = tmpLines([4 5],:); % lines/waveforms
+end
 
 
-vLim = viewParams.vLim;
-hLim = viewParams.hLim;
-hStep = viewParams.hStep;
+% x axis
+if ~any(strcmp(fieldNames,'xLabel'))
+    enteredByDefault = [enteredByDefault "xLabel"];
+    viewParams.xLabel = [pe_cfg.dimensions.x2_lbl ' ' '[' pe_cfg.dimensions.x2_units ']'];
+end
+if ~any(strcmp(fieldNames,'hLim'))
+    enteredByDefault = [enteredByDefault "hLim"];
+    viewParams.hLim = prctile(pe_cfg.dimensions.x2_vec,[0 100]);
+end
+if ~any(strcmp(fieldNames,'hStep'))
+    enteredByDefault = [enteredByDefault "hStep"];
+    viewParams.hStep = range(pe_cfg.dimensions.x2_vec);
+end
+if ~any(strcmp(fieldNames,'xAxis4z3Lbl'))
+    enteredByDefault = [enteredByDefault "xAxis4z3Lbl"];
+    viewParams.xAxis4z3Lbl = string({pe_cfg.dimensions.z3_chanLocs([1 end]).labels});
+end
 
 
-xLabel = viewParams.xLabel;
-yLabel = viewParams.yLabel;
-
-xAxis4z3Lbl = viewParams.xAxis4z3Lbl;
-yAxis4z3Lbl = viewParams.yAxis4z3Lbl;
-title4z3Lbl = viewParams.title4z3Lbl;
-
-lineColorPalette = viewParams.lineColorPalette;
-areaColorPalette = viewParams.areaColorPalette;
 
 
-xyLength  = viewParams.xyLength;
-xyPadding = viewParams.xyPadding;
+% y axis
+if ~any(strcmp(fieldNames,'yLabel'))
+    enteredByDefault = [enteredByDefault "yLabel"];
+    viewParams.yLabel = [pe_cfg.dimensions.y1_lbl ' ' '[' pe_cfg.dimensions.y1_units ']'];
+end
+if ~any(strcmp(fieldNames,'vLim'))
+    enteredByDefault = [enteredByDefault "vLim"];
+    viewParams.vLim = prctile(R(:),[0 100]);
+end
+if ~any(strcmp(fieldNames,'yAxis4z3Lbl'))
+    enteredByDefault = [enteredByDefault "yAxis4z3Lbl"];
+    viewParams.yAxis4z3Lbl = string({pe_cfg.dimensions.z3_chanLocs([1 end]).labels});
+end
+
+% title
+if ~any(strcmp(fieldNames,'title4z3Lbl'))
+    enteredByDefault = [enteredByDefault "title4z3Lbl"];
+    viewParams.title4z3Lbl = string({pe_cfg.dimensions.z3_chanLocs([1 end]).labels});
+end
+
+% xyLength and xyPadding
+if ~any(strcmp(fieldNames,'xyLength'))
+    enteredByDefault = [enteredByDefault "xyLength"];
+    viewParams.xyLength  = [0.10  0.10];
+end
+if ~any(strcmp(fieldNames,'xyPadding'))
+    enteredByDefault = [enteredByDefault "xyPadding"];
+    viewParams.xyPadding = [0.05  0.05];
+end
+
+% projection
+if ~any(strcmp(fieldNames,'projectionType'))
+    enteredByDefault = [enteredByDefault "projectionType"];
+    viewParams.projectionType = 'azimuthalEquidistant';
+end
+if ~any(strcmp(fieldNames,'projectionWarping'))
+    enteredByDefault = [enteredByDefault "projectionWarping"];
+    viewParams.projectionWarping = [1 1];
+end
+
+% highlight mask
+if ~any(strcmp(fieldNames,'highlightMask'))
+    enteredByDefault = [enteredByDefault "highlightMask"];
+    viewParams.highlightMask = false;
+end
+
+% area color palette
+if viewParams.highlightMask
+if ~any(strcmp(fieldNames,'areaColorPalette'))
+    enteredByDefault = [enteredByDefault "areaColorPalette"];
+    tmpLines = lines(5);
+    viewParams.areaColorPalette = tmpLines([2 1],:); % highlight area
+end
+end
 
 
-projectionType = viewParams.projectionType; 
-projectionWarping = viewParams.projectionWarping;
+
+if ~any(strcmp(fieldNames,'statValAxis'))
+    enteredByDefault = [enteredByDefault "statValAxis"];
+    viewParams.statValAxis = false;
+end
+if viewParams.statValAxis
+if ~any(strcmp(fieldNames,'statValLim'))
+    enteredByDefault = [enteredByDefault "statValLim"];
+    viewParams.statValLim = prctile(results.statVal_obs,[0 100]);
+end
+if ~any(strcmp(fieldNames,'y2Axis4z3Lbl'))
+    enteredByDefault = [enteredByDefault "y2Axis4z3Lbl"];
+    viewParams.y2Axis4z3Lbl = viewParams.yAxis4z3Lbl;
+end
+end
+
+
+if pe_cfg.verbose  &&  ~isempty(enteredByDefault)
+    disp('Note: the following fields of viewParams were added by default')
+    disp(enteredByDefault)
+    disp('Check below the "viewParams" used by the code to see what fields can be changed')
+    disp(viewParams)
+end
+
 %% decide content of horizontal and vertical axes
 
+% validate dimensions and suggest alternative functions to the user
 switch num2str(ny1x2>1)
     case num2str([1   0])
         error('not coded yet / probably I will never enable this feature. simply swap dimensions y1 and x2 earlier and the job is done')
@@ -123,20 +145,11 @@ switch num2str(ny1x2>1)
         xVals = pe_cfg.dimensions.([hAxisDim '_vec']);
 
     case num2str([1 1])
-        error('not coded yet')
-        vAxisDim = 'y1';
-        yVals = pe_cfg.dimensions.([vAxisDim '_vec']);
-        hAxisDim = 'x2';
-        xVals = pe_cfg.dimensions.([hAxisDim '_vec']);
+        error('not coded yet / dimensions y1 and x2 are both non-null. perhaps you want to use y1x2z3View?')
 
     otherwise
         error('dimensions y1 and x2 are both null. perhaps you want to use z3Plot?')
 end
-
-
-%% more shortcuts
-
-
 
 
 
@@ -163,24 +176,53 @@ end
 
 %% axis (subplot) locations 
 
-% shortcuts
-chanlocs = pe_cfg.dimensions.z3_chanLocs;
-
 % 3d --> 2d projections
 coord_3d = chanlocs;
-coord_2d = pe_z3Projection(coord_3d, projectionType);
+coord_2d = pe_z3Projection(coord_3d, viewParams.projectionType);
 
 % coordinate warping (nonlinear scaling) to fit the drawing area better
 xSign = sign(coord_2d(:,1));
 ySign = sign(coord_2d(:,2));
-coord_2d(:,1) = xSign.*(abs(coord_2d(:,1)).^(projectionWarping(1))); % 0.85
-coord_2d(:,2) = ySign.*(abs(coord_2d(:,2)).^(projectionWarping(2))); % 1.11
+coord_2d(:,1) = xSign.*(abs(coord_2d(:,1)).^(viewParams.projectionWarping(1))); % 0.85
+coord_2d(:,2) = ySign.*(abs(coord_2d(:,2)).^(viewParams.projectionWarping(2))); % 1.11
 
 % create position vector
 Position = coord_2d;
-Position(:,1) = normalize(Position(:,1),'range',[0+xyPadding(1) 1-xyLength(1)-xyPadding(1)]);
-Position(:,2) = normalize(Position(:,2),'range',[0+xyPadding(2) 1-xyLength(2)-xyPadding(2)]);
-Position = [Position(:,:) repmat(xyLength(1),nz3,1) repmat(xyLength(2),nz3,1) ];
+Position(:,1) = normalize(Position(:,1),'range',[0+viewParams.xyPadding(1) 1-viewParams.xyLength(1)-viewParams.xyPadding(1)]);
+Position(:,2) = normalize(Position(:,2),'range',[0+viewParams.xyPadding(2) 1-viewParams.xyLength(2)-viewParams.xyPadding(2)]);
+Position = [Position(:,:) repmat(viewParams.xyLength(1),nz3,1) repmat(viewParams.xyLength(2),nz3,1) ];
+
+%% decide values to plot
+% depending on designCode (comparing groups/condition vs association between variables)
+
+
+switch num2str(results.designCode)
+    case num2str([1 0 0])
+
+        % create averages of 1st and 4th quartiles
+        L_perObs = L(~pe_cfg.row_ignore);
+        qIdx = 1*(L<=prctile(L_perObs,25)) + ...
+            2*(L<=prctile(L_perObs,50)&L>prctile(L_perObs,25)) + ...
+            3*(L<=prctile(L_perObs,75)&L>prctile(L_perObs,50)) + ...
+            4*(L>prctile(L_perObs,75));
+        lp1_lbl    = "Q1";
+        lp1_rowIdx = qIdx==1;
+        lp2_lbl    = "Q4";
+        lp2_rowIdx = qIdx==4;
+        
+    case num2str([0 1 0])
+        lp1_lbl    = unique(pe_cfg.designTbl.groupID(L==max(L)));
+        lp1_rowIdx = L==max(L);
+        lp2_lbl = unique(pe_cfg.designTbl.groupID(L==min(L)));
+        lp2_rowIdx = L==min(L);
+    case num2str([0 0 1])
+        lp1_lbl = unique(pe_cfg.designTbl.rmFactor1(L==max(L)));
+        lp1_rowIdx = L==max(L);
+        lp2_lbl = unique(pe_cfg.designTbl.rmFactor1(L==min(L)));
+        lp2_rowIdx = L==min(L);
+    otherwise
+        error('not coded yet')
+end
 
 %% draw
 
@@ -192,14 +234,14 @@ for chanIdx = 1:length(chanlocs)
     ax(chanIdx).Position = Position(chanIdx,:);
     
     % plot data series/waveform of data corresponding with largest L code
-    rowIdx = L==max(L);
+    rowIdx = lp1_rowIdx;
     val2plot_tmp = reshape(R(rowIdx,:),[sum(rowIdx) ny1 nx2 nz3]);
     val2plot = shiftdim(mean(val2plot_tmp(:,:,:,chanIdx),1),1);
     lp1 = plot(ax(chanIdx), xVals, val2plot); hold on
     lp1.LineWidth = 1;
 
     % plot data series/waveform of data corresponding with smallest L code
-    rowIdx = L==min(L);
+    rowIdx = lp2_rowIdx;
     val2plot_tmp = reshape(R(rowIdx,:),[sum(rowIdx) ny1 nx2 nz3]);
     val2plot = shiftdim(mean(val2plot_tmp(:,:,:,chanIdx),1),1);
     lp2 = plot(ax(chanIdx), xVals, val2plot);
@@ -211,29 +253,30 @@ for chanIdx = 1:length(chanlocs)
 
 
     % x-axis
-    ax(chanIdx).XLim = hLim;
-    xTick = unique([fliplr(0:-hStep:min(xVals))  0:hStep:max(xVals)],'stable');
+    ax(chanIdx).XLim = viewParams.hLim;
+    xTick = unique([fliplr(0:-viewParams.hStep:min(xVals))  0:viewParams.hStep:max(xVals)],'stable');
     ax(chanIdx).XTick = xTick;
-    if ismember(chanlocs(chanIdx).labels,xAxis4z3Lbl)
-        ax(chanIdx).XLabel.String = xLabel;
+    if ismember(chanlocs(chanIdx).labels,viewParams.xAxis4z3Lbl)
+        ax(chanIdx).XLabel.String = viewParams.xLabel;
     else
         ax(chanIdx).XTickLabel = [];
     end
 
     % y-axis
-    ax(chanIdx).YLim = vLim;
-    if ismember(chanlocs(chanIdx).labels,yAxis4z3Lbl)
-        ax(chanIdx).YLabel.String = yLabel;
+    ax(chanIdx).YLim = viewParams.vLim;
+    if ismember(chanlocs(chanIdx).labels,viewParams.yAxis4z3Lbl)
+        ax(chanIdx).YLabel.String = viewParams.yLabel;
     else
         ax(chanIdx).YTickLabel = [];
     end
 
     % title channel label
-    if ismember(chanlocs(chanIdx).labels,title4z3Lbl)
+    if ismember(chanlocs(chanIdx).labels,viewParams.title4z3Lbl)
         title(chanlocs(chanIdx).labels,'VerticalAlignment','bottom')
     end
 
     % significance area
+    if viewParams.highlightMask 
     for signIdx = 1:size(mask,4)
         mask2plot = mask(1,:,chanIdx,signIdx);
 
@@ -249,38 +292,36 @@ for chanIdx = 1:length(chanlocs)
             a = a - step;
             b = b + step;
             % draw
-            ar(signIdx) = area(ax(chanIdx),[a b], range(vLim)*ones(1,2), vLim(1), ...
-                'FaceColor' , areaColorPalette(signIdx,:), ...
+            ar(signIdx) = area(ax(chanIdx),[a b], range(viewParams.vLim)*ones(1,2), viewParams.vLim(1), ...
+                'FaceColor' , viewParams.areaColorPalette(signIdx,:), ...
                 'FaceAlpha' , 0.25, ...        % 25% opacity
                 'EdgeColor' , 'none');         % no edge line
             uistack(ar(signIdx),'bottom');
         end
     end
+    end
 
     % plot (statVal)
-%     statValAxis = false;
-%     if statValAxis 
-%     yyaxis right
-%     val2plot_tmp = reshape(results.statVal_obs,[ny1 nx2 nz3]);
-% %     val2plot_tmp = reshape(results.resampling.inference.BR_rob,[ny1 nx2 nz3]);
-%     val2plot = shiftdim(mean(val2plot_tmp(:,:,chanIdx),1),1);
-%     lp3 = plot(ax(chanIdx), erptime, val2plot, 'LineWidth',0.8); hold on
-%     % colors
-%     %lp3.Color = lineColorPal(3,:);
-%     lp3.Color = 0.5*[1 1 1];
-%     lp3.Color(4) = 0.5;
-%     lp3.LineWidth = 0.1;
-%     lp3.LineStyle = '-';
-%     ax(chanIdx).YAxis(2).Limits = statValLim;
-%     ax(chanIdx).YAxis(2).Color = lp3.Color;
-%     % y-axis (right)
-%     ax(chanIdx).YAxis(2).TickValues = [statValLim(1) 0 statValLim(2)];
-%     if ismember(chanlocs(chanIdx).labels,["P8" "F8"])
-%         ax(chanIdx).YLabel.String = 'statistic score';
-%     else
-%         ax(chanIdx).YTickLabel = [];
-%     end
-%     end
+    if viewParams.statValAxis 
+    yyaxis right
+    val2plot_tmp = reshape(results.statVal_obs,[ny1 nx2 nz3]);
+    val2plot = shiftdim(mean(val2plot_tmp(:,:,chanIdx),1),1);
+    lp3 = plot(ax(chanIdx), xVals, val2plot, 'LineWidth',0.8); hold on
+    % colors
+    lp3.Color = 0.5*[1 1 1];
+    lp3.Color(4) = 0.5;
+    lp3.LineWidth = 0.1;
+    lp3.LineStyle = '-';
+    ax(chanIdx).YAxis(2).Limits = viewParams.statValLim;
+    ax(chanIdx).YAxis(2).Color  = lp3.Color;
+    % y-axis (right)
+    ax(chanIdx).YAxis(2).TickValues = [viewParams.statValLim(1) viewParams.statValLim(2)];
+    if ismember(chanlocs(chanIdx).labels,viewParams.y2Axis4z3Lbl)
+        ax(chanIdx).YLabel.String = 'statistic score';
+    else
+        ax(chanIdx).YTickLabel = [];
+    end
+    end
 
 
     box off
@@ -293,18 +334,4 @@ end
 ax2 = axes();
 ax2.Position = [0 0 1 1];
 ax2.Visible = 'off';
-
-switch num2str(results.designCode)
-    case num2str([1 0 0])
-        warning('not coded yet')
-        keyboard
-    case num2str([0 1 0])
-        lp1_lbl = unique(pe_cfg.designTbl.groupID(L==max(L)));
-        lp2_lbl = unique(pe_cfg.designTbl.groupID(L==min(L)));
-    case num2str([0 0 1])
-        lp1_lbl = unique(pe_cfg.designTbl.rmFactor1(L==max(L)));
-        lp2_lbl = unique(pe_cfg.designTbl.rmFactor1(L==min(L)));
-    otherwise
-        error('not coded yet')
-end
-legend(ax2,[lp1 lp2 ],[ lp1_lbl lp2_lbl ],'Position',[0.05 0.88 0.125 0.08],'Box','off')
+legend(ax2,[lp1 lp2],[ lp1_lbl lp2_lbl ],'Position',[0.05 0.88 0.125 0.08],'Box','off')
