@@ -1,0 +1,4 @@
+Version: v1.0.0
+Release Date: 18 August 2025
+Author: Germano Gallicchio
+Repository: https://github.com/GermanoGallicchio/PhysioExplorer
