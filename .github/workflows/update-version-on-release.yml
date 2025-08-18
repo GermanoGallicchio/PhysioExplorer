@@ -20,12 +20,15 @@ jobs:
           echo "Author: ${{ github.event.release.author.login }}" >> VERSION.txt
           echo "Repository: https://github.com/${{ github.repository }}" 
 
+      - name: Checkout target branch
+        run: |
+          git fetch origin main
+          git checkout main
+    
       - name: Commit and push VERSION.txt
         run: |
-          git config --local user.email "actions@github.com"
-          git config --local user.name "GitHub Action"
           git add VERSION.txt
-          git commit -m "Update VERSION.txt for ${{ github.event.release.tag_name }}"
-          git push
+          git commit -m "Update VERSION.txt for new release"
+          git push origin main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
