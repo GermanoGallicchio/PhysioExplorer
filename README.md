@@ -70,7 +70,7 @@ The wish list is mainly driven by a combination of (1) my needs, (2) my interest
 
 
 ## Cite as
-Gallicchio, G. (2025). PhysioExplorer. Zenodo. https://doi.org/10.5281/zenodo.16808783
+Gallicchio, G. (2025). PhysioExplorer. Zenodo. https://doi.org/10.5281/zenodo.16808782
 <br>
 <br>
 <a href="https://doi.org/10.5281/zenodo.16808782"><img src="https://zenodo.org/badge/906364286.svg" alt="DOI"></a>
