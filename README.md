@@ -73,9 +73,6 @@ The wish list is mainly driven by a combination of (1) my needs, (2) my interest
 Gallicchio, G. (2025). PhysioExplorer. Zenodo. https://doi.org/10.5281/zenodo.16808782
 <br>
 <br>
-<a href="https://doi.org/10.5281/zenodo.16808782"><img src="https://zenodo.org/badge/906364286.svg" alt="DOI"></a>
-
-
 
 # References
 Eriksson, L., Byrne, T., Johansson, E., Trygg, J., & Vikström, C. (2013). Multi-and megavariate data analysis basic principles and applications. Umetrics Academy.
