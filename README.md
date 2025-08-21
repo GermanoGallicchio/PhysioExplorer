@@ -60,8 +60,9 @@ Code developed on MATLAB R2022b on a Windows 10 device.
 ### Wish list (maybe future updates)
 The wish list is mainly driven by a combination of (1) my needs, (2) my interests, and (3) helping my future self replicate analyses
 - cluster descriptives: effect size for group/condition comparison 
-- visualize results: pe_view
-- own version of topoplot to reduce dependency on eeglab
+- visualize 3d results: pe_x1y2z3View
+- code PLS_SVD
+- improve own version of topoplot to allow spherical interpolation
 - write tutorials on how to use PhysioExplorer
 
 
