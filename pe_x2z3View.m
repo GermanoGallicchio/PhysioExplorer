@@ -198,28 +198,33 @@ Position = [Position(:,:) repmat(viewParams.xyLength(1),nz3,1) repmat(viewParams
 
 switch num2str(results.designCode)
     case num2str([1 0 0])
-
-        % create averages of 1st and 4th quartiles
+        % idx corresponding with 1st and 4th quartiles
         L_perObs = L(~pe_cfg.row_ignore);
         qIdx = 1*(L<=prctile(L_perObs,25)) + ...
             2*(L<=prctile(L_perObs,50)&L>prctile(L_perObs,25)) + ...
             3*(L<=prctile(L_perObs,75)&L>prctile(L_perObs,50)) + ...
             4*(L>prctile(L_perObs,75));
+        qIdx = qIdx.*~pe_cfg.row_ignore; % remove rows to ignore
         lp1_lbl    = "Q1";
         lp1_rowIdx = qIdx==1;
         lp2_lbl    = "Q4";
         lp2_rowIdx = qIdx==4;
         
     case num2str([0 1 0])
+        % idx corresponding with the two groups
         lp1_lbl    = unique(pe_cfg.designTbl.groupID(L==max(L)));
         lp1_rowIdx = L==max(L);
         lp2_lbl = unique(pe_cfg.designTbl.groupID(L==min(L)));
         lp2_rowIdx = L==min(L);
+
     case num2str([0 0 1])
+
+        % idx corresponding with the two conditions
         lp1_lbl = unique(pe_cfg.designTbl.rmFactor1(L==max(L)));
         lp1_rowIdx = L==max(L);
         lp2_lbl = unique(pe_cfg.designTbl.rmFactor1(L==min(L)));
         lp2_rowIdx = L==min(L);
+
     otherwise
         error('not coded yet')
 end
@@ -233,14 +238,14 @@ for chanIdx = 1:length(chanlocs)
     ax(chanIdx).Units = 'normalized';
     ax(chanIdx).Position = Position(chanIdx,:);
     
-    % plot data series/waveform of data corresponding with largest L code
+    % plot data series/waveform of data corresponding with lp1
     rowIdx = lp1_rowIdx;
     val2plot_tmp = reshape(R(rowIdx,:),[sum(rowIdx) ny1 nx2 nz3]);
     val2plot = shiftdim(mean(val2plot_tmp(:,:,:,chanIdx),1),1);
     lp1 = plot(ax(chanIdx), xVals, val2plot); hold on
     lp1.LineWidth = 1;
 
-    % plot data series/waveform of data corresponding with smallest L code
+    % plot data series/waveform of data corresponding with lp2
     rowIdx = lp2_rowIdx;
     val2plot_tmp = reshape(R(rowIdx,:),[sum(rowIdx) ny1 nx2 nz3]);
     val2plot = shiftdim(mean(val2plot_tmp(:,:,:,chanIdx),1),1);
