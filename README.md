@@ -7,7 +7,14 @@ Code developed on MATLAB R2022b on a Windows 10 device.
 ---
 
 ## Overview
-**PhysioExplorer (PE)** is a set of functions to extract patterns from multivariate physiological data. When the number of variables is much larger than the number of observations and when the variables are highly correlated, the data present unique challenges and are sometimes called "megavariate" (see Eriksson et al., 2013). PhysioExplorer can perform any combination of _analysis_ and _objective_ described below in both multivariate and megavariate contexts (with no distinction). One solution to the high collinearity is to run mass (i.e., a lot of) univariate tests and then cluster their results where there is contiguity in some physical dimension (e.g., time, frequency, sensor space). Another solution is to find the combination of the whole set of features that best describes behavioral data or experimental design group/condition.
+**PhysioExplorer (PE)** is a set of functions to extract patterns from multivariate physiological data. 
+
+Testing effects on datasets with many and correlated variables (i.e., multivariate)--or even much larger than the number of observations (i.e., megavariate, Eriksson et al., 2013--can be challenging due to the multiple comparison problem. (See the [green jelly bean comic](https://xkcd.com/882).) This challenge can be overcome through various approaches.
+1. One solution is to run mass (i.e., a lot of) univariate tests and then correct for False Discovery Rate (e.g., Benjamini & Hochberg, 1995).
+2. Another solution is to still run mass univariate tests and then cluster their results where there is contiguity in some physical dimension (e.g., time, frequency, sensor space). Then compute cluster metrics (e.g., their statistical mass) and perform inference on them (ADD REFERENCE Maris oostenv).
+3. Another solution is to find the combination of the whole set of features that best describes behavioral data or experimental design group/condition (Add reference).
+
+If hypothesis testing is not the goal, but rather stability of the statistical metric across sampling variability, the bootstrap framework provides such metrics.
 
 ## What PE's current version can do
 [X] = PE can do it
@@ -86,6 +93,9 @@ _draft_
 
 
 ## References
+
+Benjamini, Y., & Hochberg, Y. (1995). Controlling the false discovery rate: a practical and powerful approach to multiple testing. Journal of the Royal statistical society: series B (Methodological), 57(1), 289-300. https://doi.org/10.1111/j.2517-6161.1995.tb02031.x
+
 Eriksson, L., Byrne, T., Johansson, E., Trygg, J., & Vikström, C. (2013). Multi-and megavariate data analysis basic principles and applications. Umetrics Academy.
 
 Groppe, D. M., Urbach, T. P., & Kutas, M. (2011). Mass univariate analysis of event‐related brain potentials/fields I: A critical tutorial review. Psychophysiology, 48(12), 1711-1725.
