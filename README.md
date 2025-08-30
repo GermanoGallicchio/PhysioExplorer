@@ -43,7 +43,7 @@ Gallicchio, G. (2025). PhysioExplorer. Zenodo. [https://doi.org/10.5281/zenodo.1
 ---
 
 ## Documentation
-_draft_
+_(this documentation is an unpolished draft)_
 
 ## Analysis (pe_cfg.analysis)
 ### 'empiricalL1_FDR'
