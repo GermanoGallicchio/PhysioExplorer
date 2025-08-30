@@ -1,21 +1,13 @@
 # _PhysioExplorer_ for MATLAB
 
-Author: <br>
-Germano Gallicchio, [Bangor University](https://www.bangor.ac.uk/)
-
-Reference: <br>
-Gallicchio, G. (2025). PhysioExplorer. Zenodo. [https://doi.org/10.5281/zenodo.16808782](https://doi.org/10.5281/zenodo.16808782)
+Author: Germano Gallicchio, [Bangor University](https://www.bangor.ac.uk/)
 
 Code developed on MATLAB R2022b on a Windows 10 device.
 
+---
+
 ## Overview
 **PhysioExplorer (PE)** is a set of functions to extract patterns from multivariate physiological data. When the number of variables is much larger than the number of observations and when the variables are highly correlated, the data present unique challenges and are sometimes called "megavariate" (see Eriksson et al., 2013). PhysioExplorer can perform any combination of _analysis_ and _objective_ described below in both multivariate and megavariate contexts (with no distinction). One solution to the high collinearity is to run mass (i.e., a lot of) univariate tests and then cluster their results where there is contiguity in some physical dimension (e.g., time, frequency, sensor space). Another solution is to find the combination of the whole set of features that best describes behavioral data or experimental design group/condition.
-
-
-
-
-
-
 
 ## What PE's current version can do
 [X] = PE can do it
@@ -31,6 +23,20 @@ Code developed on MATLAB R2022b on a Windows 10 device.
 | PLS_SVD<br>permutation                     | [ ]<br>(2 variable sets) | [ ]<br>(2+ groups)  | [ ]<br>(2+ levels) |
 | PLS_SVD<br>bootstrap                       | [ ]<br>(2 variable sets) | [ ]<br>(2+ groups)  | [ ]<br>(2+ levels) |
 
+---
+
+
+## Referencing: <br>
+If you use PhysioExplorer, please cite the Zenodo DOI
+
+Example:
+
+Gallicchio, G. (2025). PhysioExplorer. Zenodo. [https://doi.org/10.5281/zenodo.16808782](https://doi.org/10.5281/zenodo.16808782)
+
+---
+
+## Documentation
+_draft_
 
 ## Analysis (pe_cfg.analysis)
 ### 'empiricalL1_FDR'
