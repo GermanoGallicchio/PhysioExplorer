@@ -9,9 +9,9 @@ Code developed on MATLAB R2022b on a Windows 10 device.
 ## Overview
 **PhysioExplorer (PE)** is a set of functions to extract patterns from multivariate physiological data. 
 
-Testing effects on datasets with many and correlated variables (i.e., multivariate)--or even much larger than the number of observations (i.e., megavariate, Eriksson et al., 2013--can be challenging due to the multiple comparison problem. (See the [green jelly bean comic](https://xkcd.com/882).) This challenge can be overcome through various approaches.
+Testing effects on datasets with many and correlated variables (i.e., multivariate)--or even much larger than the number of observations (i.e., megavariate, Eriksson et al., 2013)--can be challenging due to the multiple comparison problem. (See the [green jelly bean comic](https://xkcd.com/882).) This challenge can be overcome through various approaches.
 1. One solution is to run mass (i.e., a lot of) univariate tests and then correct for False Discovery Rate (e.g., Benjamini & Hochberg, 1995).
-2. Another solution is to still run mass univariate tests and then cluster their results where there is contiguity in some physical dimension (e.g., time, frequency, sensor space). Then compute cluster metrics (e.g., their statistical mass) and perform inference on them (ADD REFERENCE Maris oostenv).
+2. Another solution is to still run mass univariate tests and then cluster their results where there is contiguity in some physical dimension (e.g., time, frequency, sensor space). Then compute cluster metrics (e.g., their statistical mass) and perform inference on them (Groppe et al., 2011; Maris & Oostenveld, 2007).
 3. Another solution is to find the combination of the whole set of features that best describes behavioral data or experimental design group/condition (Add reference).
 
 If hypothesis testing is not the goal, but rather stability of the statistical metric across sampling variability, the bootstrap framework provides such metrics.
