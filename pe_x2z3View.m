@@ -1,4 +1,4 @@
-function pe_view(pe_cfg, results, L, R, viewParams)
+function pe_x2z3View(pe_cfg, results, L, R, viewParams)
 % ... Description ...
 %
 % INPUT:
@@ -205,26 +205,32 @@ switch num2str(results.designCode)
             3*(L<=prctile(L_perObs,75)&L>prctile(L_perObs,50)) + ...
             4*(L>prctile(L_perObs,75));
         qIdx = qIdx.*~pe_cfg.row_ignore; % remove rows to ignore
-        lp1_lbl    = "Q1";
+        % row indices
         lp1_rowIdx = qIdx==1;
-        lp2_lbl    = "Q4";
         lp2_rowIdx = qIdx==4;
+        % associated labels
+        lp1_lbl    = "Q1";
+        lp2_lbl    = "Q4";
         
     case num2str([0 1 0])
         % idx corresponding with the two groups
+        % row indices
+        lp1_rowIdx = L==max(L);
+        lp2_rowIdx = L==min(L);
+        % associated labels
         lp1_lbl    = unique(pe_cfg.designTbl.groupID(L==max(L)));
-        lp1_rowIdx = L==max(L);
         lp2_lbl = unique(pe_cfg.designTbl.groupID(L==min(L)));
-        lp2_rowIdx = L==min(L);
-
+        
     case num2str([0 0 1])
-
         % idx corresponding with the two conditions
-        lp1_lbl = unique(pe_cfg.designTbl.rmFactor1(L==max(L)));
+        % row indices
         lp1_rowIdx = L==max(L);
-        lp2_lbl = unique(pe_cfg.designTbl.rmFactor1(L==min(L)));
         lp2_rowIdx = L==min(L);
-
+        % associated labels 
+        rmFactorColIdx = contains(fieldnames(pe_cfg.designTbl),'rmFactor');
+        lp1_lbl = unique(join(pe_cfg.designTbl{L==max(L),rmFactorColIdx},', '));
+        lp2_lbl = unique(join(pe_cfg.designTbl{L==min(L),rmFactorColIdx},', '));
+  
     otherwise
         error('not coded yet')
 end
