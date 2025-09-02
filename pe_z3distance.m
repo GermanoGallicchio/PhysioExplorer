@@ -31,7 +31,7 @@ function z3_distanceMatrix = pe_z3distance(pe_cfg, eeglabPath)
 %% shortcuts
 
 chanlocs = pe_cfg.dimensions.z3_chanLocs;
-nChans = pe_cfg.dimensions.z3_num;
+nz3 = pe_cfg.dimensions.z3_num;
 
 % angular coordinates (in radians)
 theta = deg2rad([chanlocs(:).sph_theta]);
@@ -42,9 +42,9 @@ distance_z3_angular = pe_cfg.clusterParams.distance_z3_angular;
 %% angular distance matrix
 
 % compute angular distance between all pairs
-z3_distanceMatrix = zeros(nChans, nChans); % initialize D
-for chanAIdx = 1:nChans
-    for chanBIdx = 1:nChans
+z3_distanceMatrix = zeros(nz3, nz3); % initialize D
+for chanAIdx = 1:nz3
+    for chanBIdx = 1:nz3
         if chanAIdx==chanBIdx
             angDist = 0;
         else
@@ -99,8 +99,17 @@ if pe_cfg.figFlag==1
     % plot channel neighbors
     if pe_cfg.figFlag
 
+        % choose number of random channels
+        % choose 8 channels if there are at least 8 channels
+        % otherwise choose ceil of 25%
+        if nz3 >= 8
+            nRandChans = 8;
+        else
+            nRandChans = ceil(nz3/4);
+        end
+
         % choose random channel idx
-        topoPlotFig_chanIdx = sort(randperm(nChans,8));
+        topoPlotFig_chanIdx = sort(randperm(nz3,nRandChans));
         topoPlotFig_chanLbl = string({chanlocs(topoPlotFig_chanIdx).labels});
         % propose the random selection to the user
         list = string({chanlocs(:).labels});
@@ -136,7 +145,7 @@ if pe_cfg.figFlag==1
             % 3d coordinates
             coord_3d = chanlocs; % needs sph_theta and sph_phi
             % z3Values per coordinate
-            z3Values = zeros(1,nChans); % initialize to zero (uninvolved channels will stay zero)
+            z3Values = zeros(1,nz3); % initialize to zero (uninvolved channels will stay zero)
             z3Values(chanIdx(cIdx)) = 1; % set seed channel to 1
             z3Values(neighborMatrix(chanIdx(cIdx),:)) = 2; % set neighbor channels to 2
             % plot parameters
@@ -171,11 +180,11 @@ if pe_cfg.figFlag==1
     tldA = tiledlayout(panelA,'flow');
     
     nexttile(tldA)
-    mt = imagesc(1:nChans, 1:nChans, z3_distanceMatrix);
-    mt.Parent.YTick = 1:nChans;
+    mt = imagesc(1:nz3, 1:nz3, z3_distanceMatrix);
+    mt.Parent.YTick = 1:nz3;
     mt.Parent.YTickLabel = string({chanlocs.labels});
     mt.Parent.YLabel.String = 'channel labels';
-    mt.Parent.XTick = 1:nChans;
+    mt.Parent.XTick = 1:nz3;
     mt.Parent.XTickLabel = string({chanlocs.labels});
     mt.Parent.XLabel.String = 'channel labels';
     mt.Parent.Colormap = flipud(copper);
