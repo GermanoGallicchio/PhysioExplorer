@@ -1,11 +1,20 @@
 %% progress bar local function
-function pe_counter(itIdx,nIterations)
-    if nIterations > 1
-        if itIdx==1; fprintf(['iterations (of ' num2str(nIterations) '): ']); end
-        if any(itIdx==round(logspace(log10(1),log10(nIterations),40)))
-            fprintf([num2str(itIdx) ' '])
+function pe_iterationCounter(counter,total)
+    if total > 1
+        
+        % display message
+        if counter==1
+            fprintf(['counting (of ' num2str(total) ' total): '])
         end
-        if itIdx==nIterations; fprintf(' ...iterations completed \n'); end
+
+        % display the count
+        if any(counter==round(logspace(log10(1),log10(total),40)))
+            fprintf([num2str(counter) ' '])
+        end
+
+
+        % display end of count
+        if counter==total; fprintf(' ...completed \n'); end
     end
 end
 
