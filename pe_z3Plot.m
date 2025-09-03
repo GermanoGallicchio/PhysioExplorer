@@ -139,7 +139,12 @@ for chanIdx = 1:nChan
         'MarkerEdgeColor',lineCol(1,1:3));
     hold on
 end
-%plot(coord_2d(chanIdx+1,1), coord_2d(chanIdx+1,2), 'X', 'MarkerSize', chanMarkerSize*2); % nasion
+
+% nasion 'x'
+wantNasion = false;
+if wantNasion
+    plot(coord_2d(chanIdx+1,1), coord_2d(chanIdx+1,2), 'X', 'MarkerSize', chanMarkerSize*2); % nasion
+end
 
 % channel labels
 if chanLbl
@@ -148,7 +153,6 @@ end
 
 
 % colorbar
-
 if colBar
     cb = colorbar;
     cb.Ticks = [0 1];
@@ -156,7 +160,7 @@ if colBar
 end
 
 
-% anatomical outlines 
+% anatomical lines 
 
 if drawLines
     % circumference
