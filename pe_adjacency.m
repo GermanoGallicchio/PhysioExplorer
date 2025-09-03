@@ -47,35 +47,114 @@ distance_y1x2_euclidean = pe_cfg.clusterParams.distance_y1x2_euclidean^2; % it's
 distance_z3_angular = pe_cfg.clusterParams.distance_z3_angular;
 z3_distanceMatrix = pe_cfg.clusterParams.z3_distanceMatrix;
 
-%%
+%% additional data
 
 % get N-dimensional grids corresponding with the points of all dimensions
 [y1Matrix, x2Matrix, z3Matrix] = ndgrid(1:ny1,1:nx2,1:nz3);
 
-%% implementation
+%% choose approach to implementation
 
-% loop through each point and find its adjacent spatial-temporal-spectral points
-adjMatrix_logical = false(Nall,Nall);% initialize adjMatrix as logical, to be deleted after converting it to sparse
-for pIdx = 1:Nall
-    
-    [pnt_y1, pnt_x2, pnt_z3] = ind2sub([ny1 nx2 nz3], pIdx);
+% 'fromLogical' (legacy approach)
+% this was the first-ish approach
+% it creates first a logical N x N matrix, fills it, then convert it to sparse
+% it fails for large N at the first step
+% this approach is still here for historical reasons and to allow comparison (for small N only)
+%
+% 'fromIdx'
+% it creates sparse matrix from indices
+% idx approach is less memory intensive, but slower
 
-    % find adjacent points of pIdx
-    % ...euclidean distance in y1x2 plane less than or equal to input value
-    criterion1 = (y1Matrix-pnt_y1).^2 + (x2Matrix-pnt_x2).^2 <= distance_y1x2_euclidean;
-    %find(criterion1)'
-
-    % ...angular distance in channel space less than or equal to input value
-    chanNeighIdx = find(z3_distanceMatrix(pnt_z3,:) <= distance_z3_angular); % indices of channels that are neighbors of the channel representing pIdx
-    criterion2 = ismember(z3Matrix,chanNeighIdx);
-
-    % combine the two criteria. % this will be one row of the sparse adjMatrix;
-    adjMatrix_logical(pIdx,:) = reshape(criterion1 & criterion2,[1 ny1*nx2*nz3]);
-    
+% choose approach to creation of sparse matrix:      fromLogical | fromIdx
+if Nall < 100000
+    sparseApproach = 'fromLogical'; 
+else
+    sparseApproach = 'fromIdx';
 end
 
-adjMatrix = sparse(adjMatrix_logical);
-clear adjMatrix_logical % free memory
+
+%% implementation
+
+switch sparseApproach
+    case 'fromLogical'
+
+        % initialize adjMatrix as logical, to be deleted after converting it to sparse
+        adjMatrix_logical = false(Nall,Nall); 
+
+        % loop through each point and find its adjacent spatial-temporal-spectral points
+        for pIdx = 1:Nall
+
+            % find the y1-x2-z3 coordinate corresponding with point pIdx
+            [pnt_y1, pnt_x2, pnt_z3] = ind2sub([ny1 nx2 nz3], pIdx);
+
+            % find adjacent points of pIdx
+            % ...euclidean distance in y1x2 plane less than or equal to input value
+            criterion1 = (y1Matrix-pnt_y1).^2 + (x2Matrix-pnt_x2).^2 <= distance_y1x2_euclidean;
+            %find(criterion1)'
+
+            % ...angular distance in channel space less than or equal to input value
+            chanNeighIdx = find(z3_distanceMatrix(pnt_z3,:) <= distance_z3_angular); % indices of channels that are neighbors of the channel representing pIdx
+            criterion2 = ismember(z3Matrix,chanNeighIdx);
+
+            % combine the two criteria. % this will be one row of the sparse adjMatrix;
+            adjMatrix_logical(pIdx,:) = reshape(criterion1 & criterion2,[1 ny1*nx2*nz3]);
+
+            % use the counter that I normally use for permutation and bootstrap
+            % although its name is a bit misleading (no iterations, simply looping through a lot of things)
+            if pIdx==1
+                disp('computing the adjacency matrix')
+            end
+            pe_counter(pIdx,Nall);
+        end
+        
+        % create sparse matrix
+        adjMatrix = sparse(adjMatrix_logical);
+        clear adjMatrix_logical % free memory
+
+    case 'fromIdx'
+
+        % initialize the sparsity indices. their exact length depends on the number of neighbors, so hard to predict accurately
+        a_idx = [];
+        b_idx = [];
+
+        % loop through each point and find its adjacent spatial-temporal-spectral points
+        for pIdx = 1:Nall
+
+            % find the y1-x2-z3 coordinate corresponding with point pIdx
+            [pnt_y1, pnt_x2, pnt_z3] = ind2sub([ny1 nx2 nz3], pIdx);
+
+            % find adjacent points of pIdx
+            % ...euclidean distance in y1x2 plane less than or equal to input value
+            criterion1 = (y1Matrix-pnt_y1).^2 + (x2Matrix-pnt_x2).^2 <= distance_y1x2_euclidean;
+            %find(criterion1)'
+
+            % ...angular distance in channel space less than or equal to input value
+            chanNeighIdx = find(z3_distanceMatrix(pnt_z3,:) <= distance_z3_angular); % indices of channels that are neighbors of the channel representing pIdx
+            criterion2 = ismember(z3Matrix,chanNeighIdx);
+
+            % combine the two criteria.
+            criteria = criterion1 & criterion2;
+            criteria_idx = find(criteria);
+
+            % fill indices
+            % a = idx of current point (repeated as many times as needed)
+            % b = idx of neighbor points to point a
+            a_idx = [a_idx; repmat(pIdx, numel(criteria_idx), 1)];
+            b_idx = [b_idx; criteria_idx(:)];
+
+            % use the counter that I normally use for permutation and bootstrap
+            % although its name is a bit misleading (no iterations, simply looping through a lot of things)
+            if pIdx==1
+                disp('computing the adjacency matrix')
+            end
+            pe_counter(pIdx,Nall);
+        end
+
+        % create sparse matrix
+        value = 1;
+        adjMatrix = sparse(a_idx, b_idx, value, Nall, Nall);
+        
+end
+
 
 %% adjacency matrix figure
 if pe_cfg.figFlag
