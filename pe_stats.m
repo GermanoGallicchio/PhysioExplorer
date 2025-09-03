@@ -97,7 +97,8 @@ nz3 = pe_cfg.dimensions.z3_num;
 % if group not entered in designTable: put 1s all over
 varLbl = pe_cfg.designTbl.Properties.VariableNames;
 if ~any(contains(varLbl,'groupID'))
-    warning('"groupID" column in pe_cfg.designTable not entered. I am assuming you have one group. (note: use all 1s if there is only one group)')
+    warning('"groupID" column in pe_cfg.designTable not entered. I am assuming you have one group.')
+    disp('note: to achieve the same and not see the warning above create a group variable and use all 1s)')
     pe_cfg.designTbl.groupID = ones(size(pe_cfg.designTbl,1),1);
 end
 
@@ -279,7 +280,7 @@ switch [pe_cfg.analysis ' & ' num2str(pe_cfg.designCode)]
                     statVal_boot(itIdx,:) = statVal;
             end
 
-            pe_iterationCounter(itIdx,nIterations)  % iteration counter
+            pe_counter(itIdx,nIterations)  % iteration counter
         end
 
         % collate results
