@@ -82,7 +82,7 @@ neighborNum = sum(neighborMatrix,1);  % number of neighbors for each channel
 
 %% figure
 
-if pe_cfg.figFlag==1
+if pe_cfg.figFlag==1  &&  pe_cfg.dimensions.z3_num>2
 
     %% figure setup
     figure(); clf
@@ -97,7 +97,7 @@ if pe_cfg.figFlag==1
     % topoplot
 
     % plot channel neighbors
-    if pe_cfg.figFlag
+    if pe_cfg.figFlag 
 
         % choose number of random channels
         % choose 8 channels if there are at least 8 channels
