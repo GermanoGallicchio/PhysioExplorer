@@ -5,7 +5,6 @@ function pe_counter(counter,total)
     if total > 1
         % set persistent variables
         
-
         % display message
         if counter==1
             fprintf(['counting (of ' num2str(total) ' total): '])
@@ -30,7 +29,8 @@ function pe_counter(counter,total)
         end
 
         % display the count
-        if any(counter==round(logspace(log10(1),log10(total),40)))
+        nSteps = 20;
+        if any(counter==round(logspace(log10(1),log10(total),nSteps)))
             fprintf([num2str(counter) ' '])
         end
 
