@@ -153,7 +153,7 @@ switch [pe_cfg.analysis ' & ' num2str(pe_cfg.designCode)]
             end
             statVal_resamp(itIdx,:) = statVal;
 
-            pe_iterationCounter(itIdx,nIterations)  % iteration counter
+            pe_counter(itIdx,nIterations)  % iteration counter
         end
 
         % collate results
@@ -182,7 +182,7 @@ switch [pe_cfg.analysis ' & ' num2str(pe_cfg.designCode)]
             end
             statVal_resamp(itIdx,:) = statVal;
 
-            pe_iterationCounter(itIdx,nIterations)  % iteration counter
+            pe_counter(itIdx,nIterations)  % iteration counter
         end
 
         % collate results
@@ -228,7 +228,7 @@ switch [pe_cfg.analysis ' & ' num2str(pe_cfg.designCode)]
             end
             statVal_resamp(itIdx,:) = statVal;
 
-            pe_iterationCounter(itIdx,nIterations)  % iteration counter
+            pe_counter(itIdx,nIterations)  % iteration counter
         end
 
         % collate results
@@ -335,7 +335,7 @@ switch [pe_cfg.analysis ' & ' num2str(pe_cfg.designCode)]
                     statVal_boot(itIdx,:) = statVal;
             end
 
-            pe_iterationCounter(itIdx,nIterations)  % iteration counter
+            pe_counter(itIdx,nIterations)  % iteration counter
         end
                 
         % collate results
@@ -404,7 +404,7 @@ switch [pe_cfg.analysis ' & ' num2str(pe_cfg.designCode)]
                     statVal_boot(itIdx,:) = statVal;
             end
 
-            pe_iterationCounter(itIdx,nIterations)  % iteration counter
+            pe_counter(itIdx,nIterations)  % iteration counter
         end
                 
         % collate results
@@ -544,7 +544,7 @@ switch [pe_cfg.analysis ' & ' num2str(pe_cfg.designCode)]
                     RV_boot(:,:,itIdx) = RV;
             end
 
-            pe_iterationCounter(itIdx,nIterations)  % iteration counter
+            pe_counter(itIdx,nIterations)  % iteration counter
         end
 
         % collate results
