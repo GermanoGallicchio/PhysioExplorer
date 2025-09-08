@@ -573,7 +573,6 @@ switch [pe_cfg.analysis ' & ' num2str(pe_cfg.designCode)]
         error(['not yet coded: ' pe_cfg.objective ' ' num2str(pe_cfg.designCode)])
 end
 
-
 %% compute inferential metrics
 % compute p values for permutation testing
 % compute BR and CI for bootstrap stability
