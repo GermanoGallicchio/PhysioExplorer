@@ -51,6 +51,32 @@ end
 
 
 
+% contour mask
+if ~any(strcmp(fieldNames,'contourMask'))
+    enteredByDefault = [enteredByDefault "contourMask"];
+    viewParams.contourMask = false;
+end
+
+% contour parameters
+if viewParams.contourMask
+    
+    % contour color
+    if ~any(strcmp(fieldNames,'contourColor'))
+        enteredByDefault = [enteredByDefault "contourColor"];
+        %viewParams.contourColor = [0 0 0];
+        viewParams.contourColor = viewParams.colorMap(round(prctile(1:size(viewParams.colorMap,1),[75 25])),:);
+    end
+
+    % contour line width
+    if ~any(strcmp(fieldNames,'contourLineWidth'))
+        enteredByDefault = [enteredByDefault "contourLineWidth"];
+        viewParams.contourLineWidth = 1.5;
+    end
+end
+
+
+
+
 % x axis
 
 if ~any(strcmp(fieldNames,'hLim'))
@@ -99,32 +125,6 @@ end
 
 
 
-
-% contour mask
-if ~any(strcmp(fieldNames,'contourMask'))
-    enteredByDefault = [enteredByDefault "contourMask"];
-    viewParams.contourMask = false;
-end
-
-% contour parameters
-if viewParams.contourMask
-    
-    % contour color
-    if ~any(strcmp(fieldNames,'contourColor'))
-        enteredByDefault = [enteredByDefault "contourColor"];
-        %viewParams.contourColor = [0 0 0];
-        viewParams.contourColor = viewParams.colorMap(round(prctile(1:size(viewParams.colorMap,1),[75 25])),:);
-    end
-
-    % contour line width
-    if ~any(strcmp(fieldNames,'contourLineWidth'))
-        enteredByDefault = [enteredByDefault "contourLineWidth"];
-        viewParams.contourLineWidth = 1.5;
-    end
-end
-
-
-
 if pe_cfg.verbose  &&  ~isempty(enteredByDefault)
     disp('Note: the following fields of viewParams were added by default')
     disp(enteredByDefault)
@@ -132,35 +132,49 @@ if pe_cfg.verbose  &&  ~isempty(enteredByDefault)
     disp(viewParams)
 end
 
-
-
 %% highlight area mask
-switch [pe_cfg.objective ' & ' pe_cfg.analysis]
-    case 'permutationH0testing & empiricalL1_FDR'
-        mask(:,:,:,1) = reshape(results.resampling.pVal_emp_FDR<pe_cfg.p_crit & results.statVal_obs>0, ny1, nx2, nz3); % positive
-        mask(:,:,:,2) = reshape(results.resampling.pVal_emp_FDR<pe_cfg.p_crit & results.statVal_obs<0, ny1, nx2, nz3); % negative
+if viewParams.contourMask
+    switch [pe_cfg.objective ' & ' pe_cfg.analysis]
+        case 'permutationH0testing & empiricalL1_FDR'
+            mask(:,:,:,1) = reshape(results.resampling.pVal_emp_FDR<pe_cfg.p_crit & results.statVal_obs>0, ny1, nx2, nz3); % positive
+            mask(:,:,:,2) = reshape(results.resampling.pVal_emp_FDR<pe_cfg.p_crit & results.statVal_obs<0, ny1, nx2, nz3); % negative
 
-    case 'permutationH0testing & theoreticalL1_clusterMaxT'
-        mask(:,:,:,1) = reshape(results.clusters.clusterMembership_mass_obs_Corrected~=0 & results.statVal_obs>0, ny1, nx2, nz3); % positive
-        mask(:,:,:,2) = reshape(results.clusters.clusterMembership_mass_obs_Corrected~=0 & results.statVal_obs<0, ny1, nx2, nz3); % negative
+        case 'permutationH0testing & theoreticalL1_clusterMaxT'
+            mask(:,:,:,1) = reshape(results.clusters.clusterMembership_mass_obs_Corrected~=0 & results.statVal_obs>0, ny1, nx2, nz3); % positive
+            mask(:,:,:,2) = reshape(results.clusters.clusterMembership_mass_obs_Corrected~=0 & results.statVal_obs<0, ny1, nx2, nz3); % negative
 
-    case 'bootstrapStability & empiricalL1_FDR'
-        mask(:,:,:,1) = reshape(results.resampling.inference.BR_rob>2, ny1, nx2, nz3); % positive
-        mask(:,:,:,2) = reshape(results.resampling.inference.BR_rob<-2, ny1, nx2, nz3); % negative
 
-    case 'bootstrapStability & theoreticalL1_clusterMaxT'
-        error('not yet coded')
+            % --new section-- experimental does not work
+            %         statVal_obsMasked = reshape(results.statVal_obs, ny1, nx2, nz3);
+            %         masked(:,:,:,1) = statVal_obsMasked .* ~mask(:,:,:,1);
+            %         masked(:,:,:,2) = statVal_obsMasked .* ~mask(:,:,:,2);
+            %         mask = masked;
+            % ---
 
-    otherwise
-        error('not yet coded')
+        case 'bootstrapStability & empiricalL1_FDR'
+            mask(:,:,:,1) = reshape(results.resampling.inference.BR_rob>2, ny1, nx2, nz3); % positive
+            mask(:,:,:,2) = reshape(results.resampling.inference.BR_rob<-2, ny1, nx2, nz3); % negative
+
+        case 'bootstrapStability & theoreticalL1_clusterMaxT'
+            error('not yet coded')
+
+        otherwise
+            error('not yet coded')
+    end
 end
 
-%% draw
+%% decide values to plot
+% depending on results content 
 
-% plot
 xVals = pe_cfg.dimensions.x2_vec;
 yVals = pe_cfg.dimensions.y1_vec;
+
+% TO DO: split into two options: results based or L based
 values2plot = reshape(results.statVal_obs, ny1, nx2, nz3);
+
+%% figure
+
+% draw
 im = imagesc(xVals,yVals,values2plot);
 
 % colormap
@@ -181,7 +195,7 @@ if viewParams.xAxisVisibility
 else
     im.Parent.XAxis.TickLabels = [];
 end
-
+im.Parent.XMinorTick = "off";
 
 % y-axis
 im.Parent.YLim = viewParams.vLim;
@@ -196,6 +210,7 @@ if viewParams.yAxisVisibility
 else
     im.Parent.YAxis.TickLabels = [];
 end
+im.Parent.YMinorTick = "off";
 
 % title
 if any(strcmp(fieldNames,'title'))
@@ -213,7 +228,11 @@ if viewParams.contourMask
             contour2plot = sum(mask(:,:,:,mIdx),4);
             col = viewParams.contourColor(mIdx,:);
             col = col.^(1/4);
-            contour(xVals,yVals,contour2plot,1,'Color', col, 'LineWidth',viewParams.contourLineWidth);
+            [~,ct] = contour(xVals,yVals,contour2plot,1, ...
+                'LineWidth',viewParams.contourLineWidth);
+            ct.EdgeColor = col;
+            ct.ShowText = 'off';
+            
         end
     end
 end
