@@ -384,9 +384,7 @@ clusterMetrics.id        = clustIDList;
 clusterMetrics.size      = clusterMetrics_size;
 clusterMetrics.mass      = clusterMetrics_mass;
 
-% sanity check: no NaN, no Inf among the clusterMetrics
-% TO DO 
-
+% sanity check: no NaN, no Inf among the clusterMetrics 
 if any(isinf([clusterMetrics.size clusterMetrics.mass]))
     warning('infinite values in the clusterMetrics')
     keyboard
