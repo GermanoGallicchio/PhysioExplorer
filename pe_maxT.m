@@ -106,7 +106,11 @@ if pe_cfg.figFlag  &&  nIterations>2
         xline(inference_maxT.thresholds.([metrics_lbl{metIdx}]), 'Color', [1 0 0], 'LineStyle', '-', 'LineWidth', 2);
 
         % observed data
-        xline([metrics(1).(metrics_lbl{metIdx})],'LineStyle','-.','Color',[0.5 0.5 0]);
+        if ~isempty(metrics(1).id)
+            xline([metrics(1).(metrics_lbl{metIdx})],'LineStyle','-.','Color',[0.5 0.5 0],'LineWidth',0.5);
+        else
+            xline(0,'LineStyle','-.','Color',[0.5 0.5 0],'LineWidth',2);
+        end
 
         % H0 distribution (all points)
         yyaxis right
