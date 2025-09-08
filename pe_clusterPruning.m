@@ -32,7 +32,7 @@ for fIdx = 1:metrics_num
 
     % identify non-significant clusters
     clusters2remove_idx  = abs(results.clusters.metrics_obs.(metrics_lbl{fIdx})) <= results.clusters.inference_maxT.thresholds.(metrics_lbl{fIdx});
-
+    
     % prune away non significant clusters
     for clIdx = find(clusters2remove_idx)
         % zero features corresponding with non-significant clusters
