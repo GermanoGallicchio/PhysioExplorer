@@ -106,6 +106,3 @@ Groppe, D. M., Urbach, T. P., & Kutas, M. (2011). Mass univariate analysis of ev
 Maris, E., & Oostenveld, R. (2007). Nonparametric statistical testing of EEG-and MEG-data. Journal of neuroscience methods, 164(1), 177-190.
 
 
-## How to report bugs
-
-<img src="https://i.imgflip.com/5dxhjp.jpg" width=25%>
