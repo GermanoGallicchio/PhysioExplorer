@@ -2,7 +2,45 @@
 
 Author: Germano Gallicchio, [Bangor University](https://www.bangor.ac.uk/)
 
-Code developed on MATLAB R2022b on a Windows 10 device.
+Code developed on MATLAB R2025b on a Linux OS (Kubuntu).
+
+
+
+## Overview
+
+Not yet available.
+
+
+
+
+## Documentation
+
+Documentation for PhysioExplorer is available at this (link)[https://germanogallicchio.github.io/PhysioExplorer_documentation/]
+
+
+
+## Tutorials
+
+Not yet available.
+
+
+
+## Installation
+
+Not yet available.
+
+
+
+
+## How to contribute
+
+Not yet available.
+
+
+
+## How to cite
+
+Gallicchio, G. (2025). PhysioExplorer. Zenodo. [https://doi.org/10.5281/zenodo.16808782](https://doi.org/10.5281/zenodo.16808782)
 
 ---
 
