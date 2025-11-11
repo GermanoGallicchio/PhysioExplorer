@@ -306,7 +306,7 @@ for chanIdx = 1:length(chanlocs)
         title(chanlocs(chanIdx).labels,'VerticalAlignment','bottom')
     end
 
-    % TO DO: cone of influence
+    % cone of influence
     if any(strcmp(fieldNames,'coiLeft'))
         hold on
         plot(viewParams.coiLeft, yVals, '-', 'Color',[0 0 0]);
