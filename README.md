@@ -15,7 +15,7 @@ Not yet available.
 
 ## Documentation
 
-Documentation for PhysioExplorer is available at this (link)[https://germanogallicchio.github.io/PhysioExplorer_documentation/]
+Documentation for PhysioExplorer is available at this (link)[https://germanogallicchio.github.io/PhysioExplorer_documentation/index.html]
 
 
 
