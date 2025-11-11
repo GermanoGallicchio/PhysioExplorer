@@ -79,6 +79,10 @@ switch [pe_cfg.objective ' & ' pe_cfg.analysis]
             pvalVec    = pval_emp_matrix(:,colIdx);
             RignoreVec = R_ignore_matrix(:,colIdx);
             pvalVec2use = pvalVec(~RignoreVec); % remove the p values corresponding with features that are not of interest in this analysis
+            % if pvalVec2use is empty (e.g., because this feature is totally ignored), move on
+            if isempty(pvalVec2use)
+                continue
+            end
             pvalVec2use_FDR = mafdr(pvalVec2use , 'BHFDR', true);  % FDR BH correction
             pval_emp_FDR_matrix(~RignoreVec,colIdx) = pvalVec2use_FDR; % collocate pvalues in the longer matrix where they belong
         end
