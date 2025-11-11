@@ -218,7 +218,15 @@ if any(strcmp(fieldNames,'title'))
     title(titleTxt);
 end
 
-
+% cone of influence
+    if any(strcmp(fieldNames,'coiLeft'))
+        hold on
+        plot(viewParams.coiLeft, yVals, '-', 'Color',[0 0 0]);
+    end
+    if any(strcmp(fieldNames,'coiRight'))
+        hold on
+        plot(viewParams.coiRight, yVals, '-', 'Color',[0 0 0]);
+    end
 
 % contour
 if viewParams.contourMask
