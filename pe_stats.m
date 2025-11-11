@@ -70,6 +70,7 @@ end
 
 %% apply row ignore
 
+
 % matrices L and R
 L = L(~pe_cfg.row_ignore,:);
 R = R(~pe_cfg.row_ignore,:);
@@ -195,8 +196,6 @@ switch [pe_cfg.analysis ' & ' num2str(pe_cfg.designCode)]
 
             % sort rows as appropriate
             [L,R] = pe_sortRows(pe_cfg,L_orig,R_orig,rowIdx,itIdx);
-            
-           
 
             % rows of conditions belonging to first and second halves
             cond_firstHalf = 1:length(L)/2;
