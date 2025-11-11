@@ -218,7 +218,7 @@ switch num2str(results.designCode)
         lp1_rowIdx = L==max(L);
         lp2_rowIdx = L==min(L);
         % associated labels
-        lp1_lbl    = unique(pe_cfg.designTbl.groupID(L==max(L)));
+        lp1_lbl = unique(pe_cfg.designTbl.groupID(L==max(L)));
         lp2_lbl = unique(pe_cfg.designTbl.groupID(L==min(L)));
         
     case num2str([0 0 1])
@@ -228,8 +228,8 @@ switch num2str(results.designCode)
         lp2_rowIdx = L==min(L);
         % associated labels 
         rmFactorColIdx = contains(fieldnames(pe_cfg.designTbl),'rmFactor');
-        lp1_lbl = unique(join(pe_cfg.designTbl{L==max(L),rmFactorColIdx},', '));
-        lp2_lbl = unique(join(pe_cfg.designTbl{L==min(L),rmFactorColIdx},', '));
+        lp1_lbl = unique(join(pe_cfg.designTbl{L==max(L),rmFactorColIdx},', ',2));
+        lp2_lbl = unique(join(pe_cfg.designTbl{L==min(L),rmFactorColIdx},', ',2));
   
     otherwise
         error('not coded yet')
