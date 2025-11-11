@@ -118,7 +118,6 @@ end
 
 designOptions = pe_designOptions;
 
-
 if nRepeats_subjID==1
     if nUnique_groupID<=1
         designCode = [1 0 0];
