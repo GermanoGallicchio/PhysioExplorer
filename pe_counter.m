@@ -1,16 +1,42 @@
-%% progress bar local function
-function pe_counter(counter,total)
+function po_counter(counter,total)
+% SYNTAX:
+%   po_counter(counter,total)
+%
+% DESCRIPTION:
+%   Utility function displaying progress during iteratiions (e.g., Monte Carlo loops).
+%   Prints iteration counts at logarithmically spaced intervals (to fit the screen most of the times), estimates time to
+%   completion (ETA) at iteration 100 for relatively long runs (more than 1000 iterations), and signals
+%   completion. Uses persistent variables to track state across calls.
+%
+% INPUT:
+%   counter - [numeric] current iteration number (1, 2, ..., total)
+%   total   - [numeric] total number of iterations expected
+%
+% OUTPUT:
+%   (none; prints to command window)
+%
+% EXAMPLE:
+%   for itIdx = 1:nIterations
+%       % ... do work ...
+%       po_counter(itIdx, nIterations);
+%   end
+%
+% NOTE: function used in both PhysioExplorer and Polar
+%
+% AUTHOR:
+%   Germano Gallicchio (germano.gallicchio@gmail.com)
+
     persistent counting startTime
 
     if total > 1
         % set persistent variables
-        
+
         % display message
         if counter==1
             fprintf(['counting (of ' num2str(total) ' total): '])
         end
 
-        % start counting 
+        % start counting
         if counter==1  &&  total>=1000
             counting = true;
             startTime = tic;
@@ -39,4 +65,3 @@ function pe_counter(counter,total)
         if counter==total; fprintf(' ...completed \n'); end
     end
 end
-
