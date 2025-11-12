@@ -1,6 +1,6 @@
-function po_counter(counter,total)
+function pe_counter(counter,total)
 % SYNTAX:
-%   po_counter(counter,total)
+%   pe_counter(counter,total)
 %
 % DESCRIPTION:
 %   Utility function displaying progress during iteratiions (e.g., Monte Carlo loops).
